@@ -98,12 +98,12 @@ export class Announcement {
     lon: number;
 
     @ApiProperty()
-    @Column('timestamp with time zone', {nullable: true})
-    date_published: Date;
+    @Column({nullable: true})
+    date_published: string;
 
     @ApiProperty()
-    @Column('timestamp with time zone', {nullable: true})
-    date_updated: Date;
+    @Column( {nullable: true})
+    date_updated: string;
 
     @ApiProperty()
     @Column({nullable: true})

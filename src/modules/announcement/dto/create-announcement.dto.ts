@@ -77,10 +77,10 @@ export class CreateAnnouncementDto {
     lon: number;
 
     @ApiProperty()
-    date_published: Date;
+    date_published: string;
 
     @ApiProperty()
-    date_updated: Date;
+    date_updated: string;
 
     @ApiProperty()
     owner_name: string;

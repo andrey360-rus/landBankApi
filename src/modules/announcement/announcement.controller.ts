@@ -33,6 +33,12 @@ export class AnnouncementController {
     return this.announcementService.findAll(queryParams);
   }
 
+  @Get("map")
+  // @ApiResponse({ status: 200, type: [Announcement] })
+  getForMap() {
+    return this.announcementService.getForMap();
+  }
+
   @Get(":id")
   findOne(@Param("id") id: string) {
     return this.announcementService.findOne(+id);

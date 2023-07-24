@@ -3,7 +3,6 @@ import { CreateAnnouncementDto } from "./dto/create-announcement.dto";
 import { UpdateAnnouncementDto } from "./dto/update-announcement.dto";
 import { InjectConnection } from "@nestjs/typeorm";
 import { Between, In } from "typeorm";
-
 import { Connection } from "typeorm";
 import { Announcement } from "./entities/announcement.entity";
 import { GetAnnouncementsDto } from "./dto/get-announcements.dto";
@@ -61,5 +60,36 @@ export class AnnouncementService {
 
   remove(id: number) {
     return `This action removes a #${id} announcement`;
+  }
+
+  async getForMap() {
+    try {
+      const announcementPropSelect = [
+        "Announcement.id",
+        "Announcement.title",
+        "Announcement.lat",
+        "Announcement.lon",
+        "Announcement.price",
+        "Announcement.area",
+        "Announcement.photos",
+      ];
+
+      const qb = await this.connection.manager.createQueryBuilder();
+
+      const [listAnnouncement, totalCount] = await qb
+        .select(announcementPropSelect)
+        .from(Announcement, "Announcement")
+        // .addSelect((subQuery) => {
+        //   return subQuery
+        //     .select("Announcement.photos")
+        //     .from(Announcement, "Announcement")
+        //     .limit(1);
+        // })
+        .getManyAndCount();
+
+      return { listAnnouncement, totalCount };
+    } catch (error) {
+      console.log(error);
+    }
   }
 }

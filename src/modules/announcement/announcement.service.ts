@@ -22,15 +22,26 @@ export class AnnouncementService {
     let { limit, page, price_to, price_from, area_to, area_from, domain } =
       queryParams;
 
+    let domainArray: string[] | undefined;
     let offset = page * limit - limit;
 
+    if (domain) {
+      domainArray = decodeURIComponent(domain).split(",");
+    } else {
+      const { listDomains } = await this.getAllDomains();
+
+      domainArray = listDomains.reduce((acc, el) => {
+        if (!acc.includes(el.domain)) {
+          acc.push(el.domain);
+        }
+        return acc;
+      }, []);
+    }
+
     const priceFrom = !!price_from ? price_from : 1;
-    const priceTo = !!price_to ? price_to : 100000000000;
+    const priceTo = !!price_to ? price_to : 100_000_000_000;
     const areaFrom = !!area_from ? area_from : 1;
-    const areaTo = !!area_to ? area_to : 100000000000;
-    const domainsCorrect = domain?.length
-      ? [...domain]
-      : ["cian.ru", "avito.ru"];
+    const areaTo = !!area_to ? area_to : 100_000_000_000;
 
     const [listAnnouncement, totalCount] =
       await this.connection.manager.findAndCount(Announcement, {
@@ -40,7 +51,7 @@ export class AnnouncementService {
         where: {
           price: Between(priceFrom, priceTo),
           area: Between(areaFrom, areaTo),
-          domain: In(domainsCorrect),
+          domain: In(domainArray),
         },
         skip: offset,
         take: limit,
@@ -74,7 +85,7 @@ export class AnnouncementService {
         "Announcement.photos",
       ];
 
-      const qb = await this.connection.manager.createQueryBuilder();
+      const qb = this.connection.manager.createQueryBuilder();
 
       const [listAnnouncement, totalCount] = await qb
         .select(announcementPropSelect)
@@ -90,6 +101,23 @@ export class AnnouncementService {
       return { listAnnouncement, totalCount };
     } catch (error) {
       console.log(error);
+    }
+  }
+
+  async getAllDomains() {
+    try {
+      const qb = this.connection.manager.createQueryBuilder();
+
+      const [listDomains, totalCount] = await qb
+        .select("Announcement.domain")
+        .from(Announcement, "Announcement")
+        .distinct() // fix this дистинкт не возвращает уникальные значения
+        .getManyAndCount();
+
+      return { listDomains, totalCount };
+    } catch (error) {
+      console.log(error);
+      return error;
     }
   }
 }

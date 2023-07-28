@@ -19,8 +19,16 @@ export class AnnouncementService {
   }
 
   async findAll(queryParams: GetAnnouncementsDto) {
-    let { limit, page, price_to, price_from, area_to, area_from, domain } =
-      queryParams;
+    let {
+      limit,
+      page,
+      price_to,
+      price_from,
+      area_to,
+      area_from,
+      domain,
+      address,
+    } = queryParams;
 
     let domainArray: string[] | undefined;
     let offset = page * limit - limit;
@@ -30,7 +38,7 @@ export class AnnouncementService {
     } else {
       const { listDomains } = await this.getAllDomains();
 
-      domainArray = listDomains.reduce((acc, el) => {
+      domainArray = listDomains.reduce((acc: string[], el: Announcement) => {
         if (!acc.includes(el.domain)) {
           acc.push(el.domain);
         }
@@ -43,7 +51,7 @@ export class AnnouncementService {
     const areaFrom = !!area_from ? area_from : 1;
     const areaTo = !!area_to ? area_to : 100_000_000_000;
 
-    const [listAnnouncement, totalCount] =
+    let [listAnnouncement, totalCount] =
       await this.connection.manager.findAndCount(Announcement, {
         order: {
           id: "DESC",
@@ -56,6 +64,15 @@ export class AnnouncementService {
         skip: offset,
         take: limit,
       });
+
+    if (address) {
+      const addressCorrect = decodeURIComponent(address);
+
+      listAnnouncement = listAnnouncement.filter((announcement) =>
+        announcement.address.includes(addressCorrect)
+      );
+    }
+
     return { listAnnouncement, totalCount };
   }
 
@@ -111,7 +128,7 @@ export class AnnouncementService {
       const [listDomains, totalCount] = await qb
         .select("Announcement.domain")
         .from(Announcement, "Announcement")
-        .distinct() // fix this дистинкт не возвращает уникальные значения
+        .distinct() // fix this, дистинкт не возвращает уникальные значения
         .getManyAndCount();
 
       return { listDomains, totalCount };

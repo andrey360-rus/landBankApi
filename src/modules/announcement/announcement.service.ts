@@ -48,8 +48,8 @@ export class AnnouncementService {
 
     const priceFrom = !!price_from ? price_from : 1;
     const priceTo = !!price_to ? price_to : 100_000_000_000;
-    const areaFrom = !!area_from ? area_from : 1;
-    const areaTo = !!area_to ? area_to : 100_000_000_000;
+    const areaFrom = !!area_from ? area_from * 10_000 : 1;
+    const areaTo = !!area_to ? area_to * 10_000 : 100_000_000_000;
 
     let [listAnnouncement, totalCount] =
       await this.connection.manager.findAndCount(Announcement, {

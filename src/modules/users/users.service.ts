@@ -32,4 +32,13 @@ export class UsersService {
 
     return { listUsers, totalCount };
   }
+
+  async getUserByEmail(email: string) {
+    const user = await this.connection.manager.findOne(User, {
+      relations: ["roles"],
+      where: { email },
+    });
+
+    return user;
+  }
 }

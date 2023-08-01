@@ -14,6 +14,12 @@ export class RolesService {
     return role;
   }
 
+  async findAll() {
+    const roles = await this.connection.manager.find(Role);
+
+    return roles;
+  }
+
   async findRoleByValue(value: string) {
     const role = await this.connection.manager.findOne(Role, {
       where: { value },
@@ -21,10 +27,4 @@ export class RolesService {
 
     return role;
   }
-
-  //   async findRoles() {
-  //     const roles = await this.connection.manager.find(Role);
-
-  //     return roles;
-  //   }
 }

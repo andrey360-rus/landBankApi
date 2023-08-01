@@ -1,9 +1,11 @@
-import { Injectable } from "@nestjs/common";
+import { HttpException, HttpStatus, Injectable } from "@nestjs/common";
 import { User } from "./entities/users.entity";
 import { InjectConnection, InjectRepository } from "@nestjs/typeorm";
 import { Connection, Repository } from "typeorm";
 import { CreateUserDto } from "./dto/create-user.dto";
 import { RolesService } from "../roles/roles.service";
+import { AddRoleDto } from "./dto/add-role.dto";
+import { Role } from "../roles/entities/roles.entity";
 
 @Injectable()
 export class UsersService {
@@ -15,9 +17,9 @@ export class UsersService {
   async create(data: CreateUserDto) {
     const user = this.connection.manager.create(User, data);
 
-    const role = await this.roleService.findRoleByValue("ADS_EDITOR");
+    const role = await this.roleService.findRoleByValue("USER");
 
-    const userWithRoles = { ...user, roles: [role] };
+    const userWithRoles = { ...user, roles: [...[role]] };
 
     await this.connection.manager.save(User, userWithRoles);
 
@@ -40,5 +42,29 @@ export class UsersService {
     });
 
     return user;
+  }
+
+  async addRole(data: AddRoleDto) {
+    const { value, userId } = data;
+    const user = await this.connection.manager.findOne(User, {
+      where: { id: userId },
+      relations: ["roles"],
+    });
+    const role = await this.roleService.findRoleByValue(value);
+
+    if (role && user) {
+      const newUserRoles = user.roles.concat(role); // spread не работает как на 22 строке, будет перезаписывать текущий массив ролей
+
+      const userWithNewRoles = { ...user, roles: newUserRoles };
+
+      await this.connection.manager.save(User, userWithNewRoles);
+
+      return data;
+    }
+
+    throw new HttpException(
+      "Пользователь или роль не найдены",
+      HttpStatus.NOT_FOUND
+    );
   }
 }

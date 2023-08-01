@@ -6,6 +6,7 @@ import { User } from "./entities/users.entity";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { Roles } from "../auth/decorators/roles-auth.decorator";
 import { RolesGuard } from "../auth/guards/roles.guard";
+import { AddRoleDto } from "./dto/add-role.dto";
 
 @Controller("users")
 @ApiTags("Пользователи")
@@ -28,5 +29,14 @@ export class UsersController {
   @Get()
   findAll() {
     return this.usersService.findAll();
+  }
+
+  @ApiOperation({ summary: "Добавить роль пользователю" })
+  @ApiResponse({ status: 201 })
+  @Roles("ADMIN")
+  @UseGuards(RolesGuard)
+  @Post("/add_role")
+  addRole(@Body() roleDto: AddRoleDto) {
+    return this.usersService.addRole(roleDto);
   }
 }

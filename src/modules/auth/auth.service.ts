@@ -1,7 +1,9 @@
 import {
   HttpException,
   HttpStatus,
+  Inject,
   Injectable,
+  Scope,
   UnauthorizedException,
 } from "@nestjs/common";
 import { CreateUserDto } from "../users/dto/create-user.dto";
@@ -20,9 +22,9 @@ export class AuthService {
   async login(data: CreateUserDto) {
     const user = await this.validateUser(data);
 
-    const token = await this.generateToken(user);
+    const { token } = await this.generateToken(user);
 
-    return token;
+    return { user, token };
   }
 
   async registration(data: CreateUserDto) {
@@ -48,9 +50,15 @@ export class AuthService {
 
     const user = await this.userService.create({ ...data, password: hashPass });
 
-    const token = await this.generateToken(user);
+    const { token } = await this.generateToken(user);
 
-    return token;
+    return { user, token };
+  }
+
+  async check(data: User) {
+    const { token } = await this.generateToken(data);
+
+    return { token };
   }
 
   private async generateToken(user: User) {

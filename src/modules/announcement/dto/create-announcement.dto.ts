@@ -1,96 +1,170 @@
-import {ApiProperty} from "@nestjs/swagger";
-
-export class CreateAnnouncementDtoArray {
-    CreateAnnouncementDto
-}
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
+import { IsArray, IsBoolean, IsNumber, IsString } from "class-validator";
+import { IsNull } from "typeorm";
 
 export class CreateAnnouncementDto {
+  @ApiProperty({
+    example: "1",
+    description: "Уникальный идентификатор объявления",
+  })
+  @IsNumber({}, { message: "Должно быть числом" })
+  id: number;
 
-    @ApiProperty()
-    id: number;
+  @ApiProperty({
+    example: "Участок 20 соток",
+    description: "Заголовок объявления",
+  })
+  @IsString({ message: "Должно быть строкой" })
+  title: string;
 
-    @ApiProperty()
-    title: string;
+  @ApiProperty({
+    example:
+      "Продам земельный участок 825кв.м. Отличный участок с фундаментом. Подходит под ИЖС.",
+    description: "Описание объявления",
+  })
+  @IsString({ message: "Должно быть строкой" })
+  description: string;
 
-    @ApiProperty()
-    description: string;
+  @ApiProperty({
+    example: "10000",
+    description: "Площадь объекта в кв.м",
+  })
+  @IsNumber({}, { message: "Должно быть числом" })
+  area: number;
 
-    @ApiProperty()
-    area: number;
+  @ApiProperty({
+    example:
+      "Ставропольский край, Шпаковский муниципальный округ, Орловка садовое товарищество",
+    description: "Адрес объекта",
+  })
+  @IsString({ message: "Должно быть строкой" })
+  address: string;
 
-    @ApiProperty()
-    address: string;
+  @ApiProperty({
+    example: "1000000",
+    description: "Цена объекта в рублях",
+  })
+  @IsNumber({}, { message: "Должно быть числом" })
+  price: number;
 
-    @ApiProperty()
-    price: string;
+  @ApiProperty({
+    type: "array",
+    items: {
+      type: "string",
+      example:
+        "https://cdn-p.cian.site/images/0/380/269/uchastok-laptevo-96208088-1.jpg",
+    },
+    description: "Фотографии объекта",
+    nullable: true,
+  })
+  @ApiPropertyOptional()
+  @IsArray()
+  @IsString({ each: true })
+  photos: string[];
 
-    @ApiProperty()
-    photos: string[];
+  @ApiProperty({
+    example: "agricultural",
+    description: "Категория объекта",
+    nullable: true,
+  })
+  @ApiPropertyOptional()
+  @IsString({ message: "Должно быть строкой" })
+  land_category: string;
 
-    @ApiProperty()
-    land_category: string;
+  @ApiProperty({
+    example: "izhs",
+    description: "Вид объекта",
+  })
+  @ApiPropertyOptional()
+  @IsString({ message: "Должно быть строкой" })
+  land_use: string;
 
-    @ApiProperty()
-    land_use: string;
+  @ApiProperty()
+  @ApiPropertyOptional()
+  @IsString({ message: "Должно быть строкой" })
+  land_class: string;
 
-    @ApiProperty()
-    land_class: string;
+  @ApiProperty()
+  @ApiPropertyOptional()
+  @IsString({ message: "Должно быть строкой" })
+  land_plot_title: string;
 
-    @ApiProperty()
-    land_plot_title: string;
+  @ApiProperty()
+  @ApiPropertyOptional()
+  railway_line: string;
 
-    @ApiProperty()
-    railway_line: string;
+  @ApiProperty()
+  @ApiPropertyOptional()
+  asphalt_pavement: string;
 
-    @ApiProperty()
-    asphalt_pavement: string;
+  @ApiProperty()
+  @ApiPropertyOptional()
+  electricity: string;
 
-    @ApiProperty()
-    electricity: string;
+  @ApiProperty()
+  @ApiPropertyOptional()
+  gas: string;
 
-    @ApiProperty()
-    gas: string;
+  @ApiProperty()
+  @ApiPropertyOptional()
+  water_supply: string;
 
-    @ApiProperty()
-    water_supply: string;
+  @ApiProperty()
+  @ApiPropertyOptional()
+  sewage: string;
 
-    @ApiProperty()
-    sewage: string;
+  @ApiProperty()
+  @ApiPropertyOptional()
+  highway_proximity: string;
 
-    @ApiProperty()
-    highway_proximity: string;
+  @ApiProperty()
+  @ApiPropertyOptional()
+  is_rent: string;
 
-    @ApiProperty()
-    is_rent: string;
+  @ApiProperty()
+  @ApiPropertyOptional()
+  flat_land_level: string;
 
-    @ApiProperty()
+  @ApiProperty()
+  @ApiPropertyOptional()
+  @IsString({ message: "Должно быть строкой" })
+  phone: string;
 
-    flat_land_level: string;
+  @ApiProperty()
+  @IsNumber({}, { message: "Должно быть числом" })
+  lat: number;
 
-    @ApiProperty()
-    phone: string;
+  @ApiProperty()
+  @IsNumber({}, { message: "Должно быть числом" })
+  lon: number;
 
-    @ApiProperty()
-    lat: number;
+  @ApiProperty()
+  @ApiPropertyOptional()
+  @IsString({ message: "Должно быть строкой" })
+  date_published: string;
 
-    @ApiProperty()
-    lon: number;
+  @ApiProperty()
+  @ApiPropertyOptional()
+  @IsString({ message: "Должно быть строкой" })
+  date_updated: string;
 
-    @ApiProperty()
-    date_published: string;
+  @ApiProperty()
+  @ApiPropertyOptional()
+  @IsString({ message: "Должно быть строкой" })
+  owner_name: string;
 
-    @ApiProperty()
-    date_updated: string;
+  @ApiProperty()
+  @ApiPropertyOptional()
+  @IsString({ message: "Должно быть строкой" })
+  cadastral_number: string;
 
-    @ApiProperty()
-    owner_name: string;
+  @ApiProperty()
+  @ApiPropertyOptional()
+  @IsString({ message: "Должно быть строкой" })
+  domain: string;
 
-    @ApiProperty()
-    cadastral_number: string;
-
-    @ApiProperty()
-    domain: string;
-
-    @ApiProperty()
-    url: string;
+  @ApiProperty()
+  @ApiPropertyOptional()
+  @IsString({ message: "Должно быть строкой" })
+  url: string;
 }

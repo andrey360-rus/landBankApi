@@ -1,44 +1,38 @@
-import { ApiProperty } from "@nestjs/swagger";
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import { IsInt } from "class-validator";
 
-class UnitsDiapason {
-  @ApiProperty({ required: false, default: 100000000 })
-  to: number;
-
-  @ApiProperty({ required: false, default: 1 })
-  from: number;
-}
-
 export class GetAnnouncementsDto {
-  @ApiProperty({ required: false, default: 15 })
+  @ApiProperty({ default: 1 })
+  @ApiPropertyOptional()
   @IsInt()
   page?: number;
 
-  @ApiProperty({ required: false, default: 20 })
+  @ApiProperty({ default: 100 })
+  @ApiPropertyOptional()
   @IsInt()
   limit?: number;
 
-  // @ApiProperty({required: false})
-  // area?: UnitsDiapason;
-
-  // @ApiProperty({required: false})
-  // price?: UnitsDiapason;
-
-  @ApiProperty({ required: false, default: 100000000 })
+  @ApiProperty({ default: 100000000 })
+  @ApiPropertyOptional()
   price_to?: number;
 
-  @ApiProperty({ required: false, default: 1 })
+  @ApiProperty({ default: 1 })
+  @ApiPropertyOptional()
   price_from?: number;
 
-  @ApiProperty({ required: false, default: 10000000 })
+  @ApiProperty({ default: 10000000 })
+  @ApiPropertyOptional()
   area_to?: number;
 
-  @ApiProperty({ required: false, default: 1 })
+  @ApiProperty({ default: 1 })
+  @ApiPropertyOptional()
   area_from?: number;
 
-  @ApiProperty({ required: false })
+  @ApiProperty()
+  @ApiPropertyOptional()
   domain?: string;
 
-  @ApiProperty({ required: false })
+  @ApiProperty()
+  @ApiPropertyOptional()
   address?: string;
 }

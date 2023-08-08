@@ -160,4 +160,11 @@ export class Announcement {
   @ApiProperty()
   @Column({ nullable: true })
   url: string;
+
+  @ApiProperty({
+    example: false,
+    description: "Флаг проверки объявления",
+  })
+  @Column({ nullable: true })
+  isChecked: boolean;
 }

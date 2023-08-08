@@ -7,19 +7,25 @@ import {
   Param,
   Delete,
   Query,
-  UsePipes,
+  UseGuards,
 } from "@nestjs/common";
 import { AnnouncementService } from "./announcement.service";
 import { CreateAnnouncementDto } from "./dto/create-announcement.dto";
 import { UpdateAnnouncementDto } from "./dto/update-announcement.dto";
 import {
   ApiBearerAuth,
+  ApiForbiddenResponse,
+  ApiOkResponse,
   ApiOperation,
   ApiResponse,
   ApiTags,
 } from "@nestjs/swagger";
 import { Announcement } from "./entities/announcement.entity";
 import { GetAnnouncementsDto } from "./dto/get-announcements.dto";
+import { boolean } from "@hapi/joi";
+import { ToggleCheckedAnnouncementDto } from "./dto/toggle-checked-announcement.dto";
+import { Roles } from "../auth/decorators/roles-auth.decorator";
+import { RolesGuard } from "../auth/guards/roles.guard";
 
 @Controller("announcements")
 @ApiTags("Объявления")
@@ -72,5 +78,23 @@ export class AnnouncementController {
   @Delete(":id")
   remove(@Param("id") id: string) {
     return this.announcementService.remove(+id);
+  }
+
+  @ApiOperation({ summary: "Изменить флаг проверки объявления" })
+  @ApiOkResponse({
+    description: "Флаг успешно изменен",
+    type: ToggleCheckedAnnouncementDto,
+  })
+  @ApiForbiddenResponse({
+    description: "Недостаточно прав",
+  })
+  @ApiBearerAuth()
+  @Roles("ADMIN")
+  @UseGuards(RolesGuard)
+  @Patch(":id/checked")
+  toggleChecked(
+    @Body() toggleCheckedAnnouncementDto: ToggleCheckedAnnouncementDto
+  ) {
+    return this.announcementService.toggleChecked(toggleCheckedAnnouncementDto);
   }
 }

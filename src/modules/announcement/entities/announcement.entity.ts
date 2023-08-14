@@ -1,8 +1,9 @@
-import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, Index, PrimaryGeneratedColumn } from "typeorm";
 import { ApiProperty } from "@nestjs/swagger";
 import { string } from "@hapi/joi";
 
 @Entity("announcement")
+@Index(["area", "address", "price", "domain"])
 export class Announcement {
   @ApiProperty({
     example: "1",

@@ -35,4 +35,8 @@ export class GetAnnouncementsDto {
   @ApiProperty()
   @ApiPropertyOptional()
   address?: string;
+
+  @ApiProperty()
+  @ApiPropertyOptional()
+  areaUnit?: string;
 }

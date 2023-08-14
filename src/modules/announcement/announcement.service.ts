@@ -29,6 +29,7 @@ export class AnnouncementService {
       area_from,
       domain,
       address,
+      areaUnit = "hectares",
     } = queryParams;
 
     let domainArray: string[] | undefined;
@@ -72,6 +73,28 @@ export class AnnouncementService {
       listAnnouncement = listAnnouncement.filter((announcement) =>
         announcement.address.includes(addressCorrect)
       );
+    }
+
+    switch (areaUnit) {
+      case "acres":
+        listAnnouncement.forEach((announcement) => {
+          announcement.title = `Участок ${announcement.area / 100} сотки`;
+        });
+        break;
+
+      case "sm":
+        listAnnouncement.forEach((announcement) => {
+          announcement.title = `Участок ${announcement.area.toFixed()} кв.м`;
+        });
+        break;
+
+      default:
+        listAnnouncement.forEach((announcement) => {
+          announcement.title = `Участок ${(announcement.area / 10_000).toFixed(
+            4
+          )} га `;
+        });
+        break;
     }
 
     return { listAnnouncement, totalCount };

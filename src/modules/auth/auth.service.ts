@@ -1,9 +1,7 @@
 import {
   HttpException,
   HttpStatus,
-  Inject,
   Injectable,
-  Scope,
   UnauthorizedException,
 } from "@nestjs/common";
 import { CreateUserDto } from "../users/dto/create-user.dto";

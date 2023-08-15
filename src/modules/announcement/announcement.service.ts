@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { HttpException, HttpStatus, Injectable } from "@nestjs/common";
 import { CreateAnnouncementDto } from "./dto/create-announcement.dto";
 import { UpdateAnnouncementDto } from "./dto/update-announcement.dto";
 import { InjectConnection } from "@nestjs/typeorm";
@@ -6,6 +6,7 @@ import { Between, In } from "typeorm";
 import { Connection } from "typeorm";
 import { Announcement } from "./entities/announcement.entity";
 import { GetAnnouncementsDto } from "./dto/get-announcements.dto";
+import { ToggleCheckedAnnouncementDto } from "./dto/toggle-checked-announcement.dto";
 
 @Injectable()
 export class AnnouncementService {
@@ -136,5 +137,15 @@ export class AnnouncementService {
       console.log(error);
       return error;
     }
+  }
+
+  async toggleChecked(data: ToggleCheckedAnnouncementDto) {
+    const { id, isChecked } = data;
+
+    const announcement = await this.findOne(id);
+
+    announcement.isChecked = isChecked;
+    await this.connection.manager.save(Announcement, data);
+    return { id, isChecked };
   }
 }

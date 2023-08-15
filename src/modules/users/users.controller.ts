@@ -6,7 +6,15 @@ import {
   UseGuards,
   UsePipes,
 } from "@nestjs/common";
-import { ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
+import {
+  ApiBadRequestResponse,
+  ApiBearerAuth,
+  ApiCreatedResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from "@nestjs/swagger";
 import { CreateUserDto } from "./dto/create-user.dto";
 import { UsersService } from "./users.service";
 import { User } from "./entities/users.entity";
@@ -14,14 +22,17 @@ import { Roles } from "../auth/decorators/roles-auth.decorator";
 import { RolesGuard } from "../auth/guards/roles.guard";
 import { AddRoleDto } from "./dto/add-role.dto";
 import { ValidationPipe } from "src/pipes/validation.pipe";
+import { FindAllOkResponse } from "./swagger/api-response/find-all-response.type";
+import { AddRoleErrorResponse } from "./swagger/api-response/add-role-response.type";
 
-@Controller("users")
 @ApiTags("Пользователи")
+@ApiBearerAuth()
+@Controller("users")
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @ApiOperation({ summary: "Создать пользователя" })
-  @ApiResponse({ status: 201, type: User })
+  @ApiOkResponse({ type: User, description: "Пользователь успешно создан" })
   @Roles("ADMIN")
   @UseGuards(RolesGuard)
   @UsePipes(ValidationPipe)
@@ -31,7 +42,10 @@ export class UsersController {
   }
 
   @ApiOperation({ summary: "Получить всех пользователей" })
-  @ApiResponse({ status: 200, type: [User] })
+  @ApiOkResponse({
+    type: FindAllOkResponse,
+    description: "Возвращает список пользователей",
+  })
   @Roles("ADMIN")
   @UseGuards(RolesGuard)
   @Get()
@@ -40,7 +54,14 @@ export class UsersController {
   }
 
   @ApiOperation({ summary: "Добавить роль пользователю" })
-  @ApiResponse({ status: 201 })
+  @ApiCreatedResponse({
+    description: "Роль успешно добавлена пользователю",
+    type: AddRoleDto,
+  })
+  @ApiBadRequestResponse({
+    description: "Пользователь или роль не найдены",
+    type: AddRoleErrorResponse,
+  })
   @Roles("ADMIN")
   @UseGuards(RolesGuard)
   @Post("/add_role")

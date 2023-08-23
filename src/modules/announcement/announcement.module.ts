@@ -4,6 +4,7 @@ import { AnnouncementController } from "./announcement.controller";
 import { Announcement } from "./entities/announcement.entity";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { JwtModule } from "@nestjs/jwt";
+import { DatesModule } from "src/utils/dates/dates.module";
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { JwtModule } from "@nestjs/jwt";
         expiresIn: "24h",
       },
     }),
+    DatesModule,
   ],
   controllers: [AnnouncementController],
   providers: [AnnouncementService],

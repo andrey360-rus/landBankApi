@@ -123,71 +123,25 @@ export class AnnouncementService {
       listAnnouncement = listAnnouncement.slice(offset, limit * page);
     }
 
-    const now = new Date();
-    let date_published: Date;
+    if (date_range) {
+      const now = new Date();
+      const dayAgo = new Date(now.setDate(now.getDate() - Number(date_range)));
 
-    switch (date_range) {
-      case "3":
-        const threeDaysAgoDate = new Date(now.setDate(now.getDate() - 3));
+      listAnnouncement = listAnnouncement.filter((announcement) => {
+        if (announcement.date_published) {
+          const date_published = this.datesService.parseDate(
+            announcement.date_published
+          );
 
-        listAnnouncement = listAnnouncement.filter((announcement) => {
-          if (announcement.date_published) {
-            date_published = this.datesService.parseDate(
-              announcement.date_published
-            );
+          return date_published >= dayAgo;
+        }
 
-            return date_published >= threeDaysAgoDate;
-          }
+        return false;
+      });
 
-          return false;
-        });
+      totalCount = listAnnouncement.length;
 
-        totalCount = listAnnouncement.length;
-
-        listAnnouncement = listAnnouncement.slice(offset, limit * page);
-
-        break;
-
-      case "7":
-        const sevenDaysAgoDate = new Date(now.setDate(now.getDate() - 7));
-
-        listAnnouncement = listAnnouncement.filter((announcement) => {
-          if (announcement.date_published) {
-            date_published = this.datesService.parseDate(
-              announcement.date_published
-            );
-
-            return date_published >= sevenDaysAgoDate;
-          }
-
-          return false;
-        });
-
-        totalCount = listAnnouncement.length;
-
-        listAnnouncement = listAnnouncement.slice(offset, limit * page);
-
-        break;
-      case "30":
-        const thirtyDaysAgoDate = new Date(now.setDate(now.getDate() - 30));
-
-        listAnnouncement = listAnnouncement.filter((announcement) => {
-          if (announcement.date_published) {
-            date_published = this.datesService.parseDate(
-              announcement.date_published
-            );
-
-            return date_published >= thirtyDaysAgoDate;
-          }
-
-          return false;
-        });
-
-        totalCount = listAnnouncement.length;
-
-        listAnnouncement = listAnnouncement.slice(offset, limit * page);
-
-        break;
+      listAnnouncement = listAnnouncement.slice(offset, limit * page);
     }
 
     switch (areaUnit) {
@@ -203,7 +157,7 @@ export class AnnouncementService {
         });
         break;
 
-      default:
+      case "hectares":
         listAnnouncement.forEach((announcement) => {
           announcement.title = `Участок ${(announcement.area / 10_000).toFixed(
             4

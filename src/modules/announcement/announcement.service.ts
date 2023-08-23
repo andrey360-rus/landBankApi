@@ -7,12 +7,14 @@ import { Connection } from "typeorm";
 import { Announcement } from "./entities/announcement.entity";
 import { GetAnnouncementsDto } from "./dto/get-announcements.dto";
 import { ToggleCheckedAnnouncementDto } from "./dto/toggle-checked-announcement.dto";
+import { DatesService } from "src/utils/dates/dates.service";
 
 @Injectable()
 export class AnnouncementService {
   constructor(
     @InjectConnection()
-    private readonly connection: Connection
+    private readonly connection: Connection,
+    private readonly datesService: DatesService
   ) {}
 
   async create(data: Array<CreateAnnouncementDto>) {
@@ -30,49 +32,116 @@ export class AnnouncementService {
       domain,
       address,
       areaUnit = "hectares",
+      is_rent = false,
+      keyword,
+      date_range,
+      land_use,
+      land_category,
+      sorting,
     } = queryParams;
 
-    let domainArray: string[] | undefined;
+    const domainArray = decodeURIComponent(domain).split(",") || undefined;
+
+    const landCategoryArr =
+      decodeURIComponent(land_category).split(",") || undefined;
+
+    const landUseArr = decodeURIComponent(land_use).split(",") || undefined;
+
+    const addressArr = decodeURIComponent(address).split(",") || undefined;
+
+    const keywordArr = decodeURIComponent(keyword).split(" ") || undefined;
+
+    const sortingElement = JSON.parse(sorting);
+
     let offset = page * limit - limit;
 
-    if (domain) {
-      domainArray = decodeURIComponent(domain).split(",");
-    } else {
-      const { listDomains } = await this.getAllDomains();
+    const MIN = 1;
+    const MAX = 100_000_000_000;
 
-      domainArray = listDomains.reduce((acc: string[], el: Announcement) => {
-        if (!acc.includes(el.domain)) {
-          acc.push(el.domain);
-        }
-        return acc;
-      }, []);
+    const priceFrom = !!price_from ? price_from : MIN;
+    const priceTo = !!price_to ? price_to : MAX;
+
+    let areaFrom: number;
+    let areaTo: number;
+
+    switch (areaUnit) {
+      case "hectares":
+        areaFrom = !!area_from ? area_from * 10_000 : MIN;
+        areaTo = !!area_to ? area_to * 10_000 : MAX;
+        break;
+
+      case "acres":
+        areaFrom = !!area_from ? area_from * 100 : MIN;
+        areaTo = !!area_to ? area_to * 100 : MAX;
+        break;
+
+      case "sm":
+        areaFrom = !!area_from ? area_from : MIN;
+        areaTo = !!area_from ? area_from : MAX;
+        break;
     }
-
-    const priceFrom = !!price_from ? price_from : 1;
-    const priceTo = !!price_to ? price_to : 100_000_000_000;
-    const areaFrom = !!area_from ? area_from * 10_000 : 1;
-    const areaTo = !!area_to ? area_to * 10_000 : 100_000_000_000;
 
     let [listAnnouncement, totalCount] =
       await this.connection.manager.findAndCount(Announcement, {
         order: {
-          id: "DESC",
+          ...sortingElement,
         },
         where: {
           price: Between(priceFrom, priceTo),
           area: Between(areaFrom, areaTo),
-          domain: In(domainArray),
+          is_rent,
+          ...(domain && { domain: In(domainArray) }),
+          ...(land_use && { land_use: In(landUseArr) }),
+          ...(land_category && { land_category: In(landCategoryArr) }),
         },
-        skip: offset,
-        take: limit,
+        ...((!address || !date_range || !keyword) && {
+          skip: offset,
+          take: limit,
+        }),
       });
 
     if (address) {
-      const addressCorrect = decodeURIComponent(address);
-
       listAnnouncement = listAnnouncement.filter((announcement) =>
-        announcement.address.includes(addressCorrect)
+        addressArr.find((address) => announcement.address.includes(address))
       );
+
+      totalCount = listAnnouncement.length;
+
+      listAnnouncement = listAnnouncement.slice(offset, limit * page);
+    }
+
+    if (keyword) {
+      listAnnouncement = listAnnouncement.filter((announcement) =>
+        keywordArr.every((keyword) => {
+          keyword.toLowerCase();
+          return announcement.description.includes(keyword);
+        })
+      );
+
+      totalCount = listAnnouncement.length;
+
+      listAnnouncement = listAnnouncement.slice(offset, limit * page);
+    }
+
+    if (date_range) {
+      const now = new Date();
+      const dayAgo = new Date(now.setDate(now.getDate() - Number(date_range)));
+
+      listAnnouncement = listAnnouncement.filter((announcement) => {
+        if (announcement.date_published) {
+          const date_published = this.datesService.parseDate(
+            announcement.date_published
+          );
+
+          return date_published >= dayAgo;
+        }
+
+        return false;
+      });
+
+      totalCount = listAnnouncement.length;
+
+      listAnnouncement = listAnnouncement.slice(offset, limit * page);
     }
 
     switch (areaUnit) {
@@ -88,7 +157,7 @@ export class AnnouncementService {
         });
         break;
 
-      default:
+      case "hectares":
         listAnnouncement.forEach((announcement) => {
           announcement.title = `Участок ${(announcement.area / 10_000).toFixed(
             4
@@ -101,9 +170,18 @@ export class AnnouncementService {
   }
 
   async findOne(id: number) {
-    return await this.connection.manager.findOne(Announcement, {
+    const announcement = await this.connection.manager.findOne(Announcement, {
       where: { id },
     });
+
+    if (!announcement) {
+      throw new HttpException(
+        "Объявление с таким идентификатором не найдено",
+        HttpStatus.NOT_FOUND
+      );
+    }
+
+    return announcement;
   }
 
   update(id: number, updateAnnouncementDto: UpdateAnnouncementDto) {
@@ -114,48 +192,16 @@ export class AnnouncementService {
     return `This action removes a #${id} announcement`;
   }
 
-  async getForMap() {
-    try {
-      const announcementPropSelect = [
-        "Announcement.id",
-        "Announcement.title",
-        "Announcement.lat",
-        "Announcement.lon",
-        "Announcement.price",
-        "Announcement.area",
-        "Announcement.photos",
-      ];
-
-      const qb = this.connection.manager.createQueryBuilder();
-
-      const [listAnnouncement, totalCount] = await qb
-        .select(announcementPropSelect)
-        .from(Announcement, "Announcement")
-        // .addSelect((subQuery) => {
-        //   return subQuery
-        //     .select("Announcement.photos")
-        //     .from(Announcement, "Announcement")
-        //     .limit(1);
-        // })
-        .getManyAndCount();
-
-      return { listAnnouncement, totalCount };
-    } catch (error) {
-      console.log(error);
-    }
-  }
-
-  async getAllDomains() {
+  async getAllUniqueValuesByProp(prop: string) {
     try {
       const qb = this.connection.manager.createQueryBuilder();
 
-      const [listDomains, totalCount] = await qb
-        .select("Announcement.domain")
+      const listValue = await qb
+        .select(prop)
         .from(Announcement, "Announcement")
-        .distinct() // fix this, дистинкт не возвращает уникальные значения
-        .getManyAndCount();
-
-      return { listDomains, totalCount };
+        .distinct(true)
+        .getRawMany();
+      return listValue;
     } catch (error) {
       console.log(error);
       return error;
@@ -170,5 +216,11 @@ export class AnnouncementService {
     announcement.isChecked = isChecked;
     await this.connection.manager.save(Announcement, data);
     return { id, isChecked };
+  }
+
+  async getAnnouncementsCount() {
+    const count = await this.connection.manager.count(Announcement);
+
+    return { count };
   }
 }

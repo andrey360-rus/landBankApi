@@ -47,11 +47,11 @@ export class AnnouncementController {
     return this.announcementService.findAll(queryParams);
   }
 
-  @ApiOperation({ summary: "Получить все объявления для карты" })
-  @ApiResponse({ status: 200, type: [Announcement] })
-  @Get("map")
-  getForMap() {
-    return this.announcementService.getForMap();
+  @ApiOperation({ summary: "Получить кол-во объявлений" })
+  @ApiResponse({ status: 200 })
+  @Get("count")
+  getAnnouncementsCount() {
+    return this.announcementService.getAnnouncementsCount();
   }
 
   @ApiOperation({ summary: "Получить объявление по id" })

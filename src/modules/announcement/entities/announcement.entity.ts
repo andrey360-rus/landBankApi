@@ -3,7 +3,17 @@ import { ApiProperty } from "@nestjs/swagger";
 import { string } from "@hapi/joi";
 
 @Entity("announcement")
-@Index(["area", "address", "price", "domain"])
+@Index([
+  "area",
+  "address",
+  "price",
+  "domain",
+  "land_category",
+  "land_use",
+  "is_rent",
+  "description",
+  "date_published",
+])
 export class Announcement {
   @ApiProperty({
     example: "1",

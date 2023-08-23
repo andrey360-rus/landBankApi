@@ -1,6 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import { IsArray, IsBoolean, IsNumber, IsString } from "class-validator";
-import { IsNull } from "typeorm";
+import { IsArray, IsNumber, IsString } from "class-validator";
 
 export class CreateAnnouncementDto {
   @ApiProperty({
@@ -167,4 +166,11 @@ export class CreateAnnouncementDto {
   @ApiPropertyOptional()
   @IsString({ message: "Должно быть строкой" })
   url: string;
+
+  @ApiProperty({
+    example: false,
+    description: "Флаг проверки объявления",
+  })
+  @ApiPropertyOptional()
+  isChecked: boolean;
 }

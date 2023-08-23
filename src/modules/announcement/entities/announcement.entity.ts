@@ -1,8 +1,19 @@
-import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, Index, PrimaryGeneratedColumn } from "typeorm";
 import { ApiProperty } from "@nestjs/swagger";
 import { string } from "@hapi/joi";
 
 @Entity("announcement")
+@Index([
+  "area",
+  "address",
+  "price",
+  "domain",
+  "land_category",
+  "land_use",
+  "is_rent",
+  "description",
+  "date_published",
+])
 export class Announcement {
   @ApiProperty({
     example: "1",
@@ -160,4 +171,11 @@ export class Announcement {
   @ApiProperty()
   @Column({ nullable: true })
   url: string;
+
+  @ApiProperty({
+    example: false,
+    description: "Флаг проверки объявления",
+  })
+  @Column({ nullable: true })
+  isChecked: boolean;
 }

@@ -35,4 +35,32 @@ export class GetAnnouncementsDto {
   @ApiProperty()
   @ApiPropertyOptional()
   address?: string;
+
+  @ApiProperty()
+  @ApiPropertyOptional()
+  areaUnit?: string;
+
+  @ApiProperty()
+  @ApiPropertyOptional()
+  is_rent: boolean;
+
+  @ApiProperty()
+  @ApiPropertyOptional()
+  keyword?: string;
+
+  @ApiProperty()
+  @ApiPropertyOptional()
+  date_range?: string;
+
+  @ApiProperty()
+  @ApiPropertyOptional()
+  land_use?: string;
+
+  @ApiProperty()
+  @ApiPropertyOptional()
+  land_category?: string;
+
+  @ApiProperty()
+  @ApiPropertyOptional()
+  sorting: string;
 }

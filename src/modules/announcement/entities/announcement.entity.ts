@@ -11,7 +11,6 @@ import { string } from "@hapi/joi";
   "land_category",
   "land_use",
   "is_rent",
-  "description",
   "date_published",
 ])
 export class Announcement {

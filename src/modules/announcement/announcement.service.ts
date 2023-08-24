@@ -34,7 +34,7 @@ export class AnnouncementService {
       areaUnit = "hectares",
       is_rent = false,
       keyword,
-      date_range,
+      date_range = undefined,
       land_use,
       land_category,
       sorting,
@@ -112,10 +112,9 @@ export class AnnouncementService {
 
     if (keyword) {
       listAnnouncement = listAnnouncement.filter((announcement) =>
-        keywordArr.every((keyword) => {
-          keyword.toLowerCase();
-          return announcement.description.includes(keyword);
-        })
+        keywordArr.every((keyword) =>
+          announcement.description.includes(keyword.toLowerCase())
+        )
       );
 
       totalCount = listAnnouncement.length;

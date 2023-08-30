@@ -8,13 +8,18 @@ import { Announcement } from "./entities/announcement.entity";
 import { GetAnnouncementsDto } from "./dto/get-announcements.dto";
 import { ToggleCheckedAnnouncementDto } from "./dto/toggle-checked-announcement.dto";
 import { DatesService } from "src/utils/dates/dates.service";
+import { GetFavoritiesAnnouncementsDto } from "./dto/get-favorities-announcements.dto";
+import { UsersService } from "../users/users.service";
+import { AddToFavoritiesDto } from "./dto/add-to-favorities.dto";
+import { User } from "../users/entities/users.entity";
 
 @Injectable()
 export class AnnouncementService {
   constructor(
     @InjectConnection()
     private readonly connection: Connection,
-    private readonly datesService: DatesService
+    private readonly datesService: DatesService,
+    private readonly userService: UsersService
   ) {}
 
   async create(data: Array<CreateAnnouncementDto>) {
@@ -221,5 +226,100 @@ export class AnnouncementService {
     const count = await this.connection.manager.count(Announcement);
 
     return { count };
+  }
+
+  async getFavoritiesAnnouncements(queryParams: GetFavoritiesAnnouncementsDto) {
+    const { userId } = queryParams;
+
+    const user = await this.userService.findById(userId);
+
+    if (user) {
+      return user.favoritiesAnnouncements;
+    }
+
+    throw new HttpException("Пользователь не найден", HttpStatus.NOT_FOUND);
+  }
+
+  async matchFavoriteAnnouncement(queryParams: AddToFavoritiesDto) {
+    const { userId, announcementId } = queryParams;
+
+    const favoritiesAnnouncements = await this.getFavoritiesAnnouncements({
+      userId,
+    });
+
+    const announcement = await this.findOne(announcementId);
+
+    if (favoritiesAnnouncements && announcement) {
+      const match = favoritiesAnnouncements.find(
+        (favoriteAnnouncement) => favoriteAnnouncement.id === announcement.id
+      );
+
+      if (match) {
+        return { isFavorite: true };
+      }
+
+      return { isFavorite: false };
+    }
+
+    throw new HttpException("Объявление не найдено", HttpStatus.NOT_FOUND);
+  }
+
+  async addToFavoritiesAnnouncements(data: AddToFavoritiesDto) {
+    const { userId, announcementId } = data;
+
+    const user = await this.userService.findById(userId);
+
+    const announcement = await this.findOne(announcementId);
+
+    if (announcement && user) {
+      const newFavoritiesAnnouncements =
+        user.favoritiesAnnouncements.concat(announcement);
+
+      const userWithNewFavoriteAnnouncement = {
+        ...user,
+        favoritiesAnnouncements: newFavoritiesAnnouncements,
+      };
+
+      await this.connection.manager.save(User, userWithNewFavoriteAnnouncement);
+
+      return data;
+    }
+
+    throw new HttpException(
+      "Пользователь или объявление не найдены",
+      HttpStatus.NOT_FOUND
+    );
+  }
+
+  async removeFromFavoritiesAnnouncements(data: AddToFavoritiesDto) {
+    const { userId, announcementId } = data;
+
+    const user = await this.userService.findById(userId);
+
+    const announcementToRemove = await this.findOne(announcementId);
+
+    if (announcementToRemove && user) {
+      const filteredAnnouncements = (user.favoritiesAnnouncements =
+        user.favoritiesAnnouncements.filter(
+          (announcement) => announcement.id !== announcementToRemove.id
+        ));
+
+      const userWithRemovedFavoriteAnnouncement = {
+        ...user,
+        announcement: filteredAnnouncements,
+      };
+
+      await this.connection.manager.save(
+        User,
+        userWithRemovedFavoriteAnnouncement
+      );
+
+      return data;
+    }
+
+    throw new HttpException(
+      "Пользователь или объявление не найдены",
+      HttpStatus.NOT_FOUND
+    );
   }
 }

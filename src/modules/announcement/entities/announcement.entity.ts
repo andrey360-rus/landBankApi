@@ -1,6 +1,13 @@
-import { Column, Entity, Index, PrimaryGeneratedColumn } from "typeorm";
+import {
+  Column,
+  Entity,
+  Index,
+  ManyToMany,
+  PrimaryGeneratedColumn,
+} from "typeorm";
 import { ApiProperty } from "@nestjs/swagger";
 import { string } from "@hapi/joi";
+import { User } from "src/modules/users/entities/users.entity";
 
 @Entity("announcement")
 @Index([
@@ -177,4 +184,7 @@ export class Announcement {
   })
   @Column({ nullable: true })
   isChecked: boolean;
+
+  @ManyToMany(() => User, (user) => user.favoritiesAnnouncements)
+  users: User[];
 }

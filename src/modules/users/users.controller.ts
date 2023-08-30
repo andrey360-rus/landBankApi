@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Get,
+  Param,
   Post,
   UseGuards,
   UsePipes,
@@ -12,7 +13,6 @@ import {
   ApiCreatedResponse,
   ApiOkResponse,
   ApiOperation,
-  ApiResponse,
   ApiTags,
 } from "@nestjs/swagger";
 import { CreateUserDto } from "./dto/create-user.dto";
@@ -24,6 +24,7 @@ import { AddRoleDto } from "./dto/add-role.dto";
 import { ValidationPipe } from "src/pipes/validation.pipe";
 import { FindAllOkResponse } from "./swagger/api-response/find-all-response.type";
 import { AddRoleErrorResponse } from "./swagger/api-response/add-role-response.type";
+import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 
 @ApiTags("Пользователи")
 @ApiBearerAuth()
@@ -51,6 +52,18 @@ export class UsersController {
   @Get()
   findAll() {
     return this.usersService.findAll();
+  }
+
+  @ApiOperation({ summary: "Получить пользователя по id" })
+  @ApiOkResponse({
+    type: User,
+    description: "Возвращает пользователя с выбранным id",
+  })
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @Get(":id")
+  findById(@Param("id") id: number) {
+    return this.usersService.findById(id);
   }
 
   @ApiOperation({ summary: "Добавить роль пользователю" })

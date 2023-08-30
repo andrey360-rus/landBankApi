@@ -7,6 +7,7 @@ import {
 } from "typeorm";
 import { ApiProperty } from "@nestjs/swagger";
 import { Role } from "src/modules/roles/entities/roles.entity";
+import { Announcement } from "src/modules/announcement/entities/announcement.entity";
 
 @Entity("users")
 export class User {
@@ -37,4 +38,18 @@ export class User {
     name: "user_roles",
   })
   roles: Role[];
+
+  @ApiProperty({
+    type: "array",
+    items: {
+      example: {
+        Announcement,
+      },
+    },
+  })
+  @ManyToMany(() => Announcement, (announcement) => announcement.users)
+  @JoinTable({
+    name: "favorite_announcements",
+  })
+  favoritiesAnnouncements: Announcement[];
 }

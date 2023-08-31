@@ -13,7 +13,9 @@ import { AnnouncementService } from "./announcement.service";
 import { CreateAnnouncementDto } from "./dto/create-announcement.dto";
 import { UpdateAnnouncementDto } from "./dto/update-announcement.dto";
 import {
+  ApiBadRequestResponse,
   ApiBearerAuth,
+  ApiCreatedResponse,
   ApiForbiddenResponse,
   ApiOkResponse,
   ApiOperation,
@@ -26,6 +28,15 @@ import { boolean } from "@hapi/joi";
 import { ToggleCheckedAnnouncementDto } from "./dto/toggle-checked-announcement.dto";
 import { Roles } from "../auth/decorators/roles-auth.decorator";
 import { RolesGuard } from "../auth/guards/roles.guard";
+import { GetFavoritiesAnnouncementsDto } from "./dto/get-favorities-announcements.dto";
+import { AddToFavoritiesDto } from "./dto/add-to-favorities.dto";
+import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
+import { GetFavoritiesAnnouncements } from "./swagger/api-response/get-favorities-announcements.type";
+import {
+  MatchFavoriteAnnouncementErrorResponse,
+  MatchFavoriteAnnouncementOkResponse,
+} from "./swagger/api-response/match-favorite-announcement.type";
+import { AddToFavoritiesAnnouncementsErrorResponse } from "./swagger/api-response/add-to-favorite-announcements.type";
 
 @Controller("announcements")
 @ApiTags("Объявления")
@@ -52,6 +63,78 @@ export class AnnouncementController {
   @Get("count")
   getAnnouncementsCount() {
     return this.announcementService.getAnnouncementsCount();
+  }
+
+  @ApiOperation({ summary: "Получить избранные объявления" })
+  @ApiOkResponse({
+    type: [Announcement],
+    description: "Возвращает массив избранных объявлений",
+  })
+  @ApiBadRequestResponse({
+    description: "Пользователь не найден",
+    type: GetFavoritiesAnnouncements,
+  })
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @Get("/favorities")
+  getFavoritiesAnnouncements(
+    @Query() queryParams: GetFavoritiesAnnouncementsDto
+  ) {
+    return this.announcementService.getFavoritiesAnnouncements(queryParams);
+  }
+
+  @ApiOperation({ summary: "Проверка объявления на соответствие в избранном" })
+  @ApiOkResponse({
+    type: MatchFavoriteAnnouncementOkResponse,
+    description: "Объявление есть в избранных пользователя",
+  })
+  @ApiBadRequestResponse({
+    description: "Объявление не найдено",
+    type: MatchFavoriteAnnouncementErrorResponse,
+  })
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @Get("/favorities/match")
+  matchFavoriteAnnouncement(@Query() queryParams: AddToFavoritiesDto) {
+    return this.announcementService.matchFavoriteAnnouncement(queryParams);
+  }
+
+  @ApiOperation({ summary: "Добавить объявление в избранное" })
+  @ApiCreatedResponse({
+    type: AddToFavoritiesDto,
+    description: "Объявление успешно добавлено в избранное",
+  })
+  @ApiBadRequestResponse({
+    description: "Пользователь или объявление не найдены",
+    type: AddToFavoritiesAnnouncementsErrorResponse,
+  })
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @Post("/favorities/add")
+  addToFavoritiesAnnouncements(@Body() addToFavoriteDto: AddToFavoritiesDto) {
+    return this.announcementService.addToFavoritiesAnnouncements(
+      addToFavoriteDto
+    );
+  }
+
+  @ApiOperation({ summary: "Удалить объявление из избранного" })
+  @ApiOkResponse({
+    type: AddToFavoritiesDto,
+    description: "Объявление успешно удалено из избранного",
+  })
+  @ApiBadRequestResponse({
+    description: "Пользователь или объявление не найдены",
+    type: AddToFavoritiesAnnouncementsErrorResponse,
+  })
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @Delete("/favorities/remove")
+  removeFromFavoritiesAnnouncements(
+    @Body() removeFromFavoriteDto: AddToFavoritiesDto
+  ) {
+    return this.announcementService.removeFromFavoritiesAnnouncements(
+      removeFromFavoriteDto
+    );
   }
 
   @ApiOperation({ summary: "Получить объявление по id" })

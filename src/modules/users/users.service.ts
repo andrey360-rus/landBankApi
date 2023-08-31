@@ -34,6 +34,15 @@ export class UsersService {
     return { listUsers, totalCount };
   }
 
+  async findById(id: number) {
+    const user = await this.connection.manager.findOne(User, {
+      where: { id },
+      relations: ["favoritiesAnnouncements"],
+    });
+
+    return user;
+  }
+
   async getUserByEmail(email: string) {
     const user = await this.connection.manager.findOne(User, {
       relations: ["roles"],

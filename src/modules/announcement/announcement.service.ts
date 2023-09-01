@@ -234,7 +234,10 @@ export class AnnouncementService {
     const user = await this.userService.findById(userId);
 
     if (user) {
-      return user.favoritiesAnnouncements;
+      return {
+        listAnnouncement: user.favoritiesAnnouncements,
+        totalCount: user.favoritiesAnnouncements.length,
+      };
     }
 
     throw new HttpException("Пользователь не найден", HttpStatus.NOT_FOUND);
@@ -249,8 +252,8 @@ export class AnnouncementService {
 
     const announcement = await this.findOne(announcementId);
 
-    if (favoritiesAnnouncements && announcement) {
-      const match = favoritiesAnnouncements.find(
+    if (favoritiesAnnouncements.totalCount && announcement) {
+      const match = favoritiesAnnouncements.listAnnouncement.find(
         (favoriteAnnouncement) => favoriteAnnouncement.id === announcement.id
       );
 

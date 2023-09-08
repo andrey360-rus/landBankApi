@@ -23,7 +23,6 @@ export class AnnouncementService {
     private readonly datesService: DatesService,
     private readonly userService: UsersService,
     private readonly getCoordsByAddressService: GetCoordsByAddressService
-    private readonly userService: UsersService
   ) {}
 
   async create(data: Array<CreateAnnouncementDto>) {
@@ -309,8 +308,6 @@ export class AnnouncementService {
         listAnnouncement: user.favoritiesAnnouncements,
         totalCount: user.favoritiesAnnouncements.length,
       };
-
-      return user.favoritiesAnnouncements;
     }
 
     throw new HttpException("Пользователь не найден", HttpStatus.NOT_FOUND);
@@ -327,9 +324,6 @@ export class AnnouncementService {
 
     if (favoritiesAnnouncements.totalCount && announcement) {
       const match = favoritiesAnnouncements.listAnnouncement.find(
-
-    if (favoritiesAnnouncements && announcement) {
-      const match = favoritiesAnnouncements.find(
         (favoriteAnnouncement) => favoriteAnnouncement.id === announcement.id
       );
 

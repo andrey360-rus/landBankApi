@@ -7,6 +7,7 @@ import { JwtModule } from "@nestjs/jwt";
 import { DatesModule } from "src/utils/dates/dates.module";
 import { User } from "../users/entities/users.entity";
 import { UsersModule } from "../users/users.module";
+import { GetCoordsByAddressModule } from "src/utils/get-coords-by-address/get-coords-by-address.module";
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { UsersModule } from "../users/users.module";
     }),
     DatesModule,
     UsersModule,
+    GetCoordsByAddressModule,
   ],
   controllers: [AnnouncementController],
   providers: [AnnouncementService],

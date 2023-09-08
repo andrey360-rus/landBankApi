@@ -12,6 +12,8 @@ import { GetFavoritiesAnnouncementsDto } from "./dto/get-favorities-announcement
 import { UsersService } from "../users/users.service";
 import { AddToFavoritiesDto } from "./dto/add-to-favorities.dto";
 import { User } from "../users/entities/users.entity";
+import { Request } from "express";
+import { GetCoordsByAddressService } from "src/utils/get-coords-by-address/get-coords-by-address.service";
 
 @Injectable()
 export class AnnouncementService {
@@ -19,11 +21,79 @@ export class AnnouncementService {
     @InjectConnection()
     private readonly connection: Connection,
     private readonly datesService: DatesService,
-    private readonly userService: UsersService
+    private readonly userService: UsersService,
+    private readonly getCoordsByAddressService: GetCoordsByAddressService
   ) {}
 
   async create(data: Array<CreateAnnouncementDto>) {
     return await this.connection.manager.save(Announcement, data);
+  }
+
+  async createOne(req: Request) {
+    let {
+      area,
+      description,
+      is_rent,
+      land_category,
+      land_use,
+      price,
+      title,
+      address,
+      userId,
+    } = req.body;
+
+    const encodeAddress = encodeURIComponent(address);
+
+    const { lat, lon } = await this.getCoordsByAddressService.getCoords(
+      encodeAddress
+    );
+
+    const files: any = req.files;
+
+    const photos = files.map((file) => file.filename);
+
+    const date_published = this.datesService.formateDate(new Date());
+
+    const announcementOptions = {
+      description,
+      is_rent,
+      land_category,
+      land_use,
+      price,
+      title,
+      area,
+      photos,
+      address,
+      land_class: null,
+      land_plot_title: null,
+      railway_line: null,
+      asphalt_pavement: null,
+      electricity: null,
+      gas: null,
+      water_supply: null,
+      sewage: null,
+      highway_proximity: null,
+      flat_land_level: null,
+      phone: null,
+      lat,
+      lon,
+      date_published,
+      date_updated: null,
+      owner_name: null,
+      cadastral_number: null,
+      domain: "bank-zemel.ru",
+      url: null,
+      user: {
+        id: Number(userId),
+      },
+    };
+
+    const announcement = await this.connection.manager.save(
+      Announcement,
+      announcementOptions
+    );
+
+    return announcement;
   }
 
   async findAll(queryParams: GetAnnouncementsDto) {

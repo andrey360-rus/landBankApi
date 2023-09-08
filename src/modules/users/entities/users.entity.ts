@@ -39,14 +39,16 @@ export class User {
   })
   roles: Role[];
 
-  @ApiProperty({
-    type: "array",
-    items: {
-      example: {
-        Announcement,
-      },
-    },
-  })
+  // @ApiProperty({
+  //   type: "array",
+  //   items: {
+  //     example: {
+  //       id: 1,
+  //       value: "ADMIN",
+  //       description: "Администратор",
+  //     },
+  //   },
+  // })
   @ManyToMany(() => Announcement, (announcement) => announcement.users)
   @JoinTable({
     name: "favorite_announcements",

@@ -8,6 +8,10 @@ import {
   Delete,
   Query,
   UseGuards,
+  UsePipes,
+  Req,
+  UploadedFile,
+  UseInterceptors,
 } from "@nestjs/common";
 import { AnnouncementService } from "./announcement.service";
 import { CreateAnnouncementDto } from "./dto/create-announcement.dto";
@@ -24,7 +28,6 @@ import {
 } from "@nestjs/swagger";
 import { Announcement } from "./entities/announcement.entity";
 import { GetAnnouncementsDto } from "./dto/get-announcements.dto";
-import { boolean } from "@hapi/joi";
 import { ToggleCheckedAnnouncementDto } from "./dto/toggle-checked-announcement.dto";
 import { Roles } from "../auth/decorators/roles-auth.decorator";
 import { RolesGuard } from "../auth/guards/roles.guard";
@@ -37,18 +40,55 @@ import {
   MatchFavoriteAnnouncementOkResponse,
 } from "./swagger/api-response/match-favorite-announcement.type";
 import { AddToFavoritiesAnnouncementsErrorResponse } from "./swagger/api-response/add-to-favorite-announcements.type";
+import { ValidationPipe } from "src/pipes/validation.pipe";
+import { FilesInterceptor } from "@nestjs/platform-express";
+import { diskStorage } from "multer";
+import { randomUUID } from "crypto";
+import { Request } from "express";
+
+const storage = {
+  storage: diskStorage({
+    destination: "./src/static/uploads",
+    filename: (req, file, cb) => {
+      const filename: string = randomUUID() + ".jpg";
+
+      cb(null, filename);
+    },
+  }),
+};
 
 @Controller("announcements")
 @ApiTags("Объявления")
 export class AnnouncementController {
   constructor(private readonly announcementService: AnnouncementService) {}
 
-  @ApiOperation({ summary: "Создать объявление" })
+  @ApiOperation({ summary: "Создать объявления из парсера" })
   @ApiResponse({ status: 201, type: Announcement })
   @ApiBearerAuth()
   @Post("add")
   create(@Body() createAnnouncementDto: Array<CreateAnnouncementDto>) {
     return this.announcementService.create(createAnnouncementDto);
+  }
+
+  @ApiOperation({ summary: "Создать объявление" })
+  @ApiCreatedResponse({
+    type: Announcement,
+    description: "Объявление успешно создано",
+  })
+  // @ApiBadRequestResponse({
+  //   description: "Пользователь или объявление не найдены",
+  //   type: AddToFavoritiesAnnouncementsErrorResponse,
+  // })
+  @ApiBearerAuth()
+  @Roles("ADMIN", "ADS_EDITOR")
+  @UseGuards(RolesGuard)
+  @Post("add_one")
+  @UseInterceptors(FilesInterceptor("photos", 10, storage))
+  createOne(
+    @UploadedFile() photos: Array<Express.Multer.File>,
+    @Req() req: Request
+  ) {
+    return this.announcementService.createOne(req);
   }
 
   @ApiOperation({ summary: "Получить объявления" })

@@ -3,6 +3,7 @@ import {
   Entity,
   JoinTable,
   ManyToMany,
+  OneToMany,
   PrimaryGeneratedColumn,
 } from "typeorm";
 import { ApiProperty } from "@nestjs/swagger";
@@ -39,6 +40,14 @@ export class User {
   })
   roles: Role[];
 
+  @ApiProperty({
+    type: "array",
+    items: {
+      example: {
+        Announcement,
+      },
+    },
+  })
   // @ApiProperty({
   //   type: "array",
   //   items: {
@@ -54,4 +63,7 @@ export class User {
     name: "favorite_announcements",
   })
   favoritiesAnnouncements: Announcement[];
+
+  @OneToMany(() => Announcement, (announcement) => announcement.user)
+  announcements: Announcement[];
 }

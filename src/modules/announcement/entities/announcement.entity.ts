@@ -3,10 +3,10 @@ import {
   Entity,
   Index,
   ManyToMany,
+  ManyToOne,
   PrimaryGeneratedColumn,
 } from "typeorm";
 import { ApiProperty } from "@nestjs/swagger";
-import { string } from "@hapi/joi";
 import { User } from "src/modules/users/entities/users.entity";
 
 @Entity("announcement")
@@ -187,4 +187,7 @@ export class Announcement {
 
   @ManyToMany(() => User, (user) => user.favoritiesAnnouncements)
   users: User[];
+
+  @ManyToOne(() => User, (user) => user.announcements)
+  user: User;
 }

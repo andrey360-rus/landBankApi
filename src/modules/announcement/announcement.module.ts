@@ -25,5 +25,4 @@ import { GetCoordsByAddressModule } from "src/utils/get-coords-by-address/get-co
   controllers: [AnnouncementController],
   providers: [AnnouncementService],
 })
-
 export class AnnouncementModule {}

@@ -196,8 +196,12 @@ export class AnnouncementController {
   }
 
   @ApiOperation({ summary: "Удалить объявление" })
-  @ApiResponse({ status: 200, type: Announcement })
+  @ApiOkResponse({
+    type: Announcement,
+    description: "Объявление успешно удалено",
+  })
   @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
   @Delete(":id")
   remove(@Param("id") id: string) {
     return this.announcementService.remove(+id);

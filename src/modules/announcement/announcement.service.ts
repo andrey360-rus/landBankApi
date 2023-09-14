@@ -324,9 +324,12 @@ export class AnnouncementService {
       photos: newAnnouncementPhotos,
     };
 
-    await this.connection.manager.save(Announcement, announcementOptions); // метод update не хочет работать, выдает ошибку, что не может найти сущность userId
+    const editAnnouncement = await this.connection.manager.save(
+      Announcement,
+      announcementOptions
+    ); // метод update не хочет работать, выдает ошибку, что не может найти сущность userId
 
-    return updateAnnouncementDto;
+    return editAnnouncement;
   }
 
   remove(id: number) {

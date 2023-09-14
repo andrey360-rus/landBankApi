@@ -50,7 +50,9 @@ const storage = {
   storage: diskStorage({
     destination: "./src/static/uploads",
     filename: (req, file, cb) => {
-      const filename: string = randomUUID() + ".jpg";
+      const uuid = randomUUID();
+      const fileExt = file.originalname.split(".").pop();
+      const filename: string = `${uuid}.${fileExt}`;
 
       cb(null, filename);
     },
@@ -185,14 +187,27 @@ export class AnnouncementController {
   }
 
   @ApiOperation({ summary: "Обновить объявление" })
-  @ApiResponse({ status: 200, type: Announcement })
+  @ApiOkResponse({
+    type: Announcement,
+    description: "Объявление успешно обновлено",
+  })
   @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
   @Patch(":id")
+  @UseInterceptors(FilesInterceptor("photos", 10, storage))
   update(
+    @UploadedFile() photos: Array<Express.Multer.File>,
     @Param("id") id: string,
-    @Body() updateAnnouncementDto: UpdateAnnouncementDto
+    @Body() updateAnnouncementDto: UpdateAnnouncementDto,
+    @Query() isRemoveInitImages: string,
+    @Req() req: Request
   ) {
-    return this.announcementService.update(+id, updateAnnouncementDto);
+    return this.announcementService.update(
+      +id,
+      updateAnnouncementDto,
+      isRemoveInitImages,
+      req
+    );
   }
 
   @ApiOperation({ summary: "Удалить объявление" })

@@ -185,9 +185,15 @@ export class Announcement {
   @Column({ nullable: true })
   isChecked: boolean;
 
-  @ManyToMany(() => User, (user) => user.favoritiesAnnouncements)
+  @ManyToMany(() => User, (user) => user.favoritiesAnnouncements, {
+    onDelete: "CASCADE",
+    onUpdate: "CASCADE",
+  })
   users: User[];
 
-  @ManyToOne(() => User, (user) => user.announcements)
+  @ManyToOne(() => User, (user) => user.announcements, {
+    onDelete: "CASCADE",
+    onUpdate: "CASCADE",
+  })
   user: User;
 }

@@ -14,6 +14,8 @@ import { AddToFavoritiesDto } from "./dto/add-to-favorities.dto";
 import { User } from "../users/entities/users.entity";
 import { Request } from "express";
 import { GetCoordsByAddressService } from "src/utils/get-coords-by-address/get-coords-by-address.service";
+import { myAnnouncementDomain } from "./announcement.consts";
+import { deleteStaticFiles } from "src/utils/deleteStaticFiles";
 
 @Injectable()
 export class AnnouncementService {
@@ -61,7 +63,7 @@ export class AnnouncementService {
       land_use,
       price,
       title,
-      area,
+      area: area * 10_000,
       photos,
       address,
       land_class: null,
@@ -258,28 +260,77 @@ export class AnnouncementService {
     return announcement;
   }
 
-  update(id: number, updateAnnouncementDto: UpdateAnnouncementDto) {
-    return `This action updates a #${id} announcement`;
+  // метод вроде обрабатывает и свои объявления, и из парсера
+  async update(
+    id: number,
+    updateAnnouncementDto: UpdateAnnouncementDto,
+    isRemoveInitImages: string,
+    req: Request
+  ) {
+    const nowDate = this.datesService.formateDate(new Date());
+
+    const announcement = await this.connection.manager.findOne(Announcement, {
+      where: { id },
+      relations: ["user"],
+    });
+
+    const files: any = req.files;
+
+    const newPhotos = files.map((file) => file.filename);
+
+    const { area, removableFiles } = updateAnnouncementDto;
+
+    let removableFilesArr: string[] | string = removableFiles;
+
+    if (typeof removableFiles === "string") {
+      removableFilesArr = [removableFiles];
+    }
+
+    const newArea = area * 10_000;
+
+    let newAnnouncementPhotos: string[];
+
+    if (isRemoveInitImages === "true") {
+      if (announcement.domain === myAnnouncementDomain) {
+        if (announcement.photos.length) {
+          announcement.photos.forEach((photo) => deleteStaticFiles(photo));
+        }
+      }
+
+      newAnnouncementPhotos = newPhotos;
+    } else {
+      if (removableFilesArr && removableFilesArr.length) {
+        removableFilesArr.forEach((photo) => {
+          if (announcement.photos.includes(photo)) {
+            deleteStaticFiles(photo);
+
+            const index = announcement.photos.indexOf(photo);
+
+            if (index !== -1) {
+              announcement.photos.splice(index, 1);
+            }
+          }
+        });
+      }
+
+      newAnnouncementPhotos = announcement.photos.concat(newPhotos);
+    }
+
+    const announcementOptions = {
+      ...announcement,
+      ...updateAnnouncementDto,
+      area: newArea,
+      date_updated: nowDate,
+      photos: newAnnouncementPhotos,
+    };
+
+    await this.connection.manager.save(Announcement, announcementOptions); // метод update не хочет работать, выдает ошибку, что не может найти сущность userId
+
+    return updateAnnouncementDto;
   }
 
   remove(id: number) {
     return `This action removes a #${id} announcement`;
-  }
-
-  async getAllUniqueValuesByProp(prop: string) {
-    try {
-      const qb = this.connection.manager.createQueryBuilder();
-
-      const listValue = await qb
-        .select(prop)
-        .from(Announcement, "Announcement")
-        .distinct(true)
-        .getRawMany();
-      return listValue;
-    } catch (error) {
-      console.log(error);
-      return error;
-    }
   }
 
   async toggleChecked(data: ToggleCheckedAnnouncementDto) {

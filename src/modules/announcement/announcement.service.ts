@@ -278,7 +278,12 @@ export class AnnouncementService {
 
     const newPhotos = files.map((file) => file.filename);
 
-    const { area, removableFiles } = updateAnnouncementDto;
+    const { area, removableFiles, address } = updateAnnouncementDto;
+
+    let coords: { lat: number; lon: number };
+    if (address) {
+      coords = await this.getCoordsByAddressService.getCoords(address);
+    }
 
     let removableFilesArr: string[] | string = removableFiles;
 
@@ -322,6 +327,7 @@ export class AnnouncementService {
       area: newArea,
       date_updated: nowDate,
       photos: newAnnouncementPhotos,
+      ...(coords && { lat: coords.lat, lon: coords.lon }),
     };
 
     const editAnnouncement = await this.connection.manager.save(

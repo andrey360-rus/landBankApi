@@ -4,10 +4,12 @@ import {
   Index,
   ManyToMany,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
 } from "typeorm";
 import { ApiProperty } from "@nestjs/swagger";
 import { User } from "src/modules/users/entities/users.entity";
+import { Note } from "src/modules/notes/entities/notes.entity";
 
 @Entity("announcement")
 @Index([
@@ -188,6 +190,9 @@ export class Announcement {
   @ManyToMany(() => User, (user) => user.favoritiesAnnouncements)
   users: User[];
 
-  @ManyToOne(() => User, (user) => user.announcements)
+  @ManyToOne(() => User, (user) => user.announcements, { onDelete: "CASCADE" })
   user: User;
+
+  @OneToMany(() => Note, (note) => note.announcement)
+  notes: Note[];
 }

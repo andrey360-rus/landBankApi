@@ -30,7 +30,7 @@ export class AnnouncementService {
   }
 
   async createOne(req: Request) {
-    let {
+    const {
       area,
       description,
       is_rent,
@@ -97,7 +97,7 @@ export class AnnouncementService {
   }
 
   async findAll(queryParams: GetAnnouncementsDto) {
-    let {
+    const {
       limit,
       page,
       price_to,
@@ -128,31 +128,31 @@ export class AnnouncementService {
 
     const sortingElement = JSON.parse(sorting);
 
-    let offset = page * limit - limit;
+    const offset = page * limit - limit;
 
     const MIN = 1;
     const MAX = 100_000_000_000;
 
-    const priceFrom = !!price_from ? price_from : MIN;
-    const priceTo = !!price_to ? price_to : MAX;
+    const priceFrom = price_from ? price_from : MIN;
+    const priceTo = price_to ? price_to : MAX;
 
     let areaFrom: number;
     let areaTo: number;
 
     switch (areaUnit) {
       case "hectares":
-        areaFrom = !!area_from ? area_from * 10_000 : MIN;
-        areaTo = !!area_to ? area_to * 10_000 : MAX;
+        areaFrom = area_from ? area_from * 10_000 : MIN;
+        areaTo = area_to ? area_to * 10_000 : MAX;
         break;
 
       case "acres":
-        areaFrom = !!area_from ? area_from * 100 : MIN;
-        areaTo = !!area_to ? area_to * 100 : MAX;
+        areaFrom = area_from ? area_from * 100 : MIN;
+        areaTo = area_to ? area_to * 100 : MAX;
         break;
 
       case "sm":
-        areaFrom = !!area_from ? area_from : MIN;
-        areaTo = !!area_from ? area_from : MAX;
+        areaFrom = area_from ? area_from : MIN;
+        areaTo = area_from ? area_from : MAX;
         break;
     }
 

@@ -17,7 +17,7 @@ import { CreateAnnouncementDto } from "./dto/create-announcement.dto";
 import { UpdateAnnouncementDto } from "./dto/update-announcement.dto";
 import {
   ApiBadRequestResponse,
-  ApiBearerAuth,
+  ApiBearerAuth, ApiBody,
   ApiCreatedResponse,
   ApiForbiddenResponse,
   ApiOkResponse,
@@ -65,8 +65,9 @@ export class AnnouncementController {
   @ApiOperation({ summary: "Создать объявления из парсера" })
   @ApiResponse({ status: 201, type: Announcement })
   @ApiBearerAuth()
+  @ApiBody({ type: [CreateAnnouncementDto] })
   @Post("add")
-  create(@Body() createAnnouncementDto: Array<CreateAnnouncementDto>) {
+  create(@Body() createAnnouncementDto: CreateAnnouncementDto[]) {
     return this.announcementService.create(createAnnouncementDto);
   }
 

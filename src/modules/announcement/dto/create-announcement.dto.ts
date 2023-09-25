@@ -90,39 +90,39 @@ export class CreateAnnouncementDto {
 
   @ApiProperty()
   @ApiPropertyOptional()
-  railway_line: string;
+  railway_line: boolean;
 
   @ApiProperty()
   @ApiPropertyOptional()
-  asphalt_pavement: string;
+  asphalt_pavement: boolean;
 
   @ApiProperty()
   @ApiPropertyOptional()
-  electricity: string;
+  electricity: boolean;
 
   @ApiProperty()
   @ApiPropertyOptional()
-  gas: string;
+  gas: boolean;
 
   @ApiProperty()
   @ApiPropertyOptional()
-  water_supply: string;
+  water_supply: boolean;
 
   @ApiProperty()
   @ApiPropertyOptional()
-  sewage: string;
+  sewage: boolean;
 
   @ApiProperty()
   @ApiPropertyOptional()
-  highway_proximity: string;
+  highway_proximity: boolean;
 
   @ApiProperty()
   @ApiPropertyOptional()
-  is_rent: string;
+  is_rent: boolean;
 
   @ApiProperty()
   @ApiPropertyOptional()
-  flat_land_level: string;
+  flat_land_level: boolean;
 
   @ApiProperty()
   @ApiPropertyOptional()

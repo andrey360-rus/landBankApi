@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus, Injectable } from "@nestjs/common";
+import {HttpException, HttpStatus, Injectable, NotFoundException} from "@nestjs/common";
 import { CreateAnnouncementDto } from "./dto/create-announcement.dto";
 import { UpdateAnnouncementDto } from "./dto/update-announcement.dto";
 import { InjectConnection } from "@nestjs/typeorm";
@@ -28,7 +28,12 @@ export class AnnouncementService {
   ) {}
 
   async create(data: Array<CreateAnnouncementDto>) {
-    return await this.connection.manager.save(Announcement, data);
+    try {
+      await this.connection.manager.save(Announcement, data);
+      return { message: "Announcement added" };
+    } catch (error) {
+      throw new NotFoundException("Ошибка при добавлении объявлений");
+    }
   }
 
   async createOne(req: Request) {

@@ -110,39 +110,39 @@ export class Announcement {
 
   @ApiProperty()
   @Column("boolean", { nullable: true })
-  railway_line: string;
+  railway_line: boolean;
 
   @ApiProperty()
   @Column("boolean", { nullable: true })
-  asphalt_pavement: string;
+  asphalt_pavement: boolean;
 
   @ApiProperty()
   @Column("boolean", { nullable: true })
-  electricity: string;
+  electricity: boolean;
 
   @ApiProperty()
   @Column("boolean", { nullable: true })
-  gas: string;
+  gas: boolean;
 
   @ApiProperty()
   @Column("boolean", { nullable: true })
-  water_supply: string;
+  water_supply: boolean;
 
   @ApiProperty()
   @Column("boolean", { nullable: true })
-  sewage: string;
+  sewage: boolean;
 
   @ApiProperty()
   @Column("boolean", { nullable: true })
-  highway_proximity: string;
+  highway_proximity: boolean;
 
   @ApiProperty()
   @Column("boolean", { nullable: true })
-  is_rent: string;
+  is_rent: boolean;
 
   @ApiProperty()
   @Column("boolean", { nullable: true })
-  flat_land_level: string;
+  flat_land_level: boolean;
 
   @ApiProperty()
   @Column({ nullable: true })

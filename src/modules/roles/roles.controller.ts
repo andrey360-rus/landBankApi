@@ -6,7 +6,6 @@ import {
   ApiCreatedResponse,
   ApiOkResponse,
   ApiOperation,
-  ApiResponse,
   ApiTags,
 } from "@nestjs/swagger";
 import { Role } from "./entities/roles.entity";

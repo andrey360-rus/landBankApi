@@ -5,10 +5,15 @@ import { Announcement } from "./entities/announcement.entity";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { JwtModule } from "@nestjs/jwt";
 import { DatesModule } from "src/utils/dates/dates.module";
+import { User } from "../users/entities/users.entity";
+import { UsersModule } from "../users/users.module";
+import { GetCoordsByAddressModule } from "src/utils/get-coords-by-address/get-coords-by-address.module";
+import { Note } from "../notes/entities/notes.entity";
+import { NotesModule } from "../notes/notes.module";
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Announcement]),
+    TypeOrmModule.forFeature([Announcement, User, Note]),
     JwtModule.register({
       secret: process.env.PRIVATE_KEY || "SECRET",
       signOptions: {
@@ -16,6 +21,9 @@ import { DatesModule } from "src/utils/dates/dates.module";
       },
     }),
     DatesModule,
+    UsersModule,
+    GetCoordsByAddressModule,
+    NotesModule,
   ],
   controllers: [AnnouncementController],
   providers: [AnnouncementService],

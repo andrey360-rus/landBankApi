@@ -8,10 +8,12 @@ import { DatesModule } from "src/utils/dates/dates.module";
 import { User } from "../users/entities/users.entity";
 import { UsersModule } from "../users/users.module";
 import { GetCoordsByAddressModule } from "src/utils/get-coords-by-address/get-coords-by-address.module";
+import { Note } from "../notes/entities/notes.entity";
+import { NotesModule } from "../notes/notes.module";
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Announcement, User]),
+    TypeOrmModule.forFeature([Announcement, User, Note]),
     JwtModule.register({
       secret: process.env.PRIVATE_KEY || "SECRET",
       signOptions: {
@@ -21,6 +23,7 @@ import { GetCoordsByAddressModule } from "src/utils/get-coords-by-address/get-co
     DatesModule,
     UsersModule,
     GetCoordsByAddressModule,
+    NotesModule,
   ],
   controllers: [AnnouncementController],
   providers: [AnnouncementService],

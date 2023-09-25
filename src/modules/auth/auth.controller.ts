@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Post, UseGuards } from "@nestjs/common";
+import {
+  Body,
+  Controller,
+  Get,
+  Patch,
+  Post,
+  UseGuards,
+  UsePipes,
+} from "@nestjs/common";
 import {
   ApiBadRequestResponse,
   ApiBearerAuth,
@@ -23,6 +31,9 @@ import {
   CheckErrorResponse,
   CheckOkResponse,
 } from "./swagger/api-response/check-response.type";
+import { ForgotPasswordDto } from "./dto/forgot-password.dto";
+import { ValidationPipe } from "src/pipes/validation.pipe";
+import { ChangePasswordDto } from "./dto/change-password.dto";
 
 @ApiTags("Авторизация")
 @Controller("auth")
@@ -64,5 +75,24 @@ export class AuthController {
   @Get("/check")
   check(@UserFromReq() userFromReq: User) {
     return this.authService.check(userFromReq);
+  }
+
+  @ApiOperation({ summary: "Отправка письма с инструкцией для сброса пароля" })
+  @UsePipes(ValidationPipe)
+  @Post("/forgotPassword")
+  async forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto) {
+    return this.authService.forgotPassword(forgotPasswordDto);
+  }
+
+  @ApiOperation({ summary: "Смена пароля пользователя" })
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @UsePipes(ValidationPipe)
+  @Patch("/changePassword")
+  async changePassword(
+    @UserFromReq() userFromReq: User,
+    @Body() changePasswordDto: ChangePasswordDto
+  ) {
+    return this.authService.changePassword(userFromReq, changePasswordDto);
   }
 }

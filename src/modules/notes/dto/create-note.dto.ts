@@ -1,7 +1,7 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsNumber } from "class-validator";
+import { IsNumber, IsString } from "class-validator";
 
-export class AddToFavoritiesDto {
+export class CreateNoteDto {
   @ApiProperty({
     example: "1",
     description: "Уникальный идентификатор пользователя",
@@ -15,4 +15,12 @@ export class AddToFavoritiesDto {
   })
   @IsNumber({}, { message: "Должно быть числом" })
   announcementId: number;
+
+  @ApiProperty({
+    example:
+      "Продам земельный участок 825кв.м. Отличный участок с фундаментом. Подходит под ИЖС.",
+    description: "Описание заметки",
+  })
+  @IsString({ message: "Должно быть строкой" })
+  description: string;
 }

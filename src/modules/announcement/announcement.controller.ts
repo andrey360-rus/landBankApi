@@ -8,7 +8,6 @@ import {
   Delete,
   Query,
   UseGuards,
-  UsePipes,
   Req,
   UploadedFile,
   UseInterceptors,
@@ -40,7 +39,6 @@ import {
   MatchFavoriteAnnouncementOkResponse,
 } from "./swagger/api-response/match-favorite-announcement.type";
 import { AddToFavoritiesAnnouncementsErrorResponse } from "./swagger/api-response/add-to-favorite-announcements.type";
-import { ValidationPipe } from "src/pipes/validation.pipe";
 import { FilesInterceptor } from "@nestjs/platform-express";
 import { diskStorage } from "multer";
 import { randomUUID } from "crypto";
@@ -211,8 +209,12 @@ export class AnnouncementController {
   }
 
   @ApiOperation({ summary: "Удалить объявление" })
-  @ApiResponse({ status: 200, type: Announcement })
+  @ApiOkResponse({
+    type: Announcement,
+    description: "Объявление успешно удалено",
+  })
   @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
   @Delete(":id")
   remove(@Param("id") id: string) {
     return this.announcementService.remove(+id);

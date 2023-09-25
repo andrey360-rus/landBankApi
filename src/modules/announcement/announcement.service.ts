@@ -336,7 +336,7 @@ export class AnnouncementService {
 
     const announcement = await this.findOne(announcementId);
 
-    if (favoritiesAnnouncements.totalCount && announcement) {
+    if (announcement) {
       const match = favoritiesAnnouncements.listAnnouncement.find(
         (favoriteAnnouncement) => favoriteAnnouncement.id === announcement.id
       );

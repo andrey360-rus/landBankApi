@@ -14,6 +14,8 @@ import { AddToFavoritiesDto } from "./dto/add-to-favorities.dto";
 import { User } from "../users/entities/users.entity";
 import { Request } from "express";
 import { GetCoordsByAddressService } from "src/utils/get-coords-by-address/get-coords-by-address.service";
+import { deleteStaticFiles } from "src/utils/deleteStaticFiles";
+import { myAnnouncementDomain } from "src/modules/announcement/announcement.consts";
 
 @Injectable()
 export class AnnouncementService {
@@ -81,7 +83,7 @@ export class AnnouncementService {
       date_updated: null,
       owner_name: null,
       cadastral_number: null,
-      domain: "bank-zemel.ru",
+      domain: myAnnouncementDomain,
       url: null,
       user: {
         id: Number(userId),
@@ -262,8 +264,20 @@ export class AnnouncementService {
     return `This action updates a #${id} announcement`;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} announcement`;
+  async remove(id: number) {
+    const announcement = await this.connection.manager.findOne(Announcement, {
+      where: { id },
+    });
+
+    if (announcement.domain === myAnnouncementDomain) {
+      if (announcement.photos.length) {
+        announcement.photos.forEach((photo) => deleteStaticFiles(photo));
+      }
+    }
+
+    await this.connection.manager.delete(Announcement, { id });
+
+    return announcement;
   }
 
   async getAllUniqueValuesByProp(prop: string) {

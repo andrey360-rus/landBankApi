@@ -111,8 +111,6 @@ export class AnnouncementService {
 
   async findAll(queryParams: GetAnnouncementsDto) {
     const {
-      limit,
-      page,
       price_to,
       price_from,
       area_to,
@@ -128,6 +126,8 @@ export class AnnouncementService {
       sorting,
     } = queryParams;
 
+    let { limit, page } = queryParams;
+
     const domainArray = decodeURIComponent(domain).split(",") || undefined;
 
     const landCategoryArr =
@@ -141,7 +141,11 @@ export class AnnouncementService {
 
     const sortingElement = JSON.parse(sorting);
 
-    const offset = page * limit - limit;
+    let offset: number | undefined;
+
+    if (limit) {
+      offset = page * limit - limit;
+    }
 
     const MIN = 1;
     const MAX = 100_000_000_000;
@@ -182,11 +186,15 @@ export class AnnouncementService {
           ...(land_use && { land_use: In(landUseArr) }),
           ...(land_category && { land_category: In(landCategoryArr) }),
         },
-        ...((!address || !date_range || !keyword) && {
+        ...(limit && {
           skip: offset,
           take: limit,
         }),
       });
+
+    limit = 100;
+    page = 1;
+    offset = page * limit - limit;
 
     if (address) {
       listAnnouncement = listAnnouncement.filter((announcement) =>
@@ -364,22 +372,6 @@ export class AnnouncementService {
     await this.connection.manager.delete(Announcement, { id });
 
     return announcement;
-  }
-
-  async getAllUniqueValuesByProp(prop: string) {
-    try {
-      const qb = this.connection.manager.createQueryBuilder();
-
-      const listValue = await qb
-        .select(prop)
-        .from(Announcement, "Announcement")
-        .distinct(true)
-        .getRawMany();
-      return listValue;
-    } catch (error) {
-      console.log(error);
-      return error;
-    }
   }
 
   async toggleChecked(data: ToggleCheckedAnnouncementDto) {

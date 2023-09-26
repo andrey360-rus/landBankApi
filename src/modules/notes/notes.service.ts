@@ -38,7 +38,7 @@ export class NotesService {
   async getAll(dto: GetAllBy_UserId_AnnouncementId_Dto) {
     const { userId, announcementId } = dto;
 
-    let [listNotes, totalCount] = await this.connection.manager.findAndCount(
+    const [listNotes, totalCount] = await this.connection.manager.findAndCount(
       Note,
       {
         order: { id: "DESC" },
@@ -70,6 +70,7 @@ export class NotesService {
 
       const updatedNote = await this.connection.manager.save(Note, noteOptions);
 
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { user, announcement, ...rest } = updatedNote;
 
       return rest;

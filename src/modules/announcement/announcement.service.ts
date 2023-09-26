@@ -1,4 +1,9 @@
-import {HttpException, HttpStatus, Injectable, NotFoundException} from "@nestjs/common";
+import {
+  HttpException,
+  HttpStatus,
+  Injectable,
+  NotFoundException,
+} from "@nestjs/common";
 import { CreateAnnouncementDto } from "./dto/create-announcement.dto";
 import { UpdateAnnouncementDto } from "./dto/update-announcement.dto";
 import { InjectConnection } from "@nestjs/typeorm";
@@ -55,6 +60,7 @@ export class AnnouncementService {
       encodeAddress
     );
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const files: any = req.files;
 
     const photos = files.map((file) => file.filename);
@@ -279,6 +285,7 @@ export class AnnouncementService {
       relations: ["user"],
     });
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const files: any = req.files;
 
     const newPhotos = files.map((file) => file.filename);

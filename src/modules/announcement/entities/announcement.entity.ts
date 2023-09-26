@@ -4,10 +4,12 @@ import {
   Index,
   ManyToMany,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
 } from "typeorm";
 import { ApiProperty } from "@nestjs/swagger";
 import { User } from "src/modules/users/entities/users.entity";
+import { Note } from "src/modules/notes/entities/notes.entity";
 
 @Entity("announcement")
 @Index([
@@ -108,39 +110,39 @@ export class Announcement {
 
   @ApiProperty()
   @Column("boolean", { nullable: true })
-  railway_line: string;
+  railway_line: boolean;
 
   @ApiProperty()
   @Column("boolean", { nullable: true })
-  asphalt_pavement: string;
+  asphalt_pavement: boolean;
 
   @ApiProperty()
   @Column("boolean", { nullable: true })
-  electricity: string;
+  electricity: boolean;
 
   @ApiProperty()
   @Column("boolean", { nullable: true })
-  gas: string;
+  gas: boolean;
 
   @ApiProperty()
   @Column("boolean", { nullable: true })
-  water_supply: string;
+  water_supply: boolean;
 
   @ApiProperty()
   @Column("boolean", { nullable: true })
-  sewage: string;
+  sewage: boolean;
 
   @ApiProperty()
   @Column("boolean", { nullable: true })
-  highway_proximity: string;
+  highway_proximity: boolean;
 
   @ApiProperty()
   @Column("boolean", { nullable: true })
-  is_rent: string;
+  is_rent: boolean;
 
   @ApiProperty()
   @Column("boolean", { nullable: true })
-  flat_land_level: string;
+  flat_land_level: boolean;
 
   @ApiProperty()
   @Column({ nullable: true })
@@ -185,9 +187,18 @@ export class Announcement {
   @Column({ nullable: true })
   isChecked: boolean;
 
-  @ManyToMany(() => User, (user) => user.favoritiesAnnouncements)
+  @ManyToMany(() => User, (user) => user.favoritiesAnnouncements, {
+    onDelete: "CASCADE",
+    onUpdate: "CASCADE",
+  })
   users: User[];
 
-  @ManyToOne(() => User, (user) => user.announcements)
+  @ManyToOne(() => User, (user) => user.announcements, {
+    onDelete: "CASCADE",
+    onUpdate: "CASCADE",
+  })
   user: User;
+
+  @OneToMany(() => Note, (note) => note.announcement)
+  notes: Note[];
 }

@@ -8,7 +8,6 @@ import {
   Delete,
   Query,
   UseGuards,
-  UsePipes,
   Req,
   UploadedFile,
   UseInterceptors,
@@ -18,7 +17,7 @@ import { CreateAnnouncementDto } from "./dto/create-announcement.dto";
 import { UpdateAnnouncementDto } from "./dto/update-announcement.dto";
 import {
   ApiBadRequestResponse,
-  ApiBearerAuth,
+  ApiBearerAuth, ApiBody,
   ApiCreatedResponse,
   ApiForbiddenResponse,
   ApiOkResponse,
@@ -40,7 +39,6 @@ import {
   MatchFavoriteAnnouncementOkResponse,
 } from "./swagger/api-response/match-favorite-announcement.type";
 import { AddToFavoritiesAnnouncementsErrorResponse } from "./swagger/api-response/add-to-favorite-announcements.type";
-import { ValidationPipe } from "src/pipes/validation.pipe";
 import { FilesInterceptor } from "@nestjs/platform-express";
 import { diskStorage } from "multer";
 import { randomUUID } from "crypto";
@@ -50,7 +48,9 @@ const storage = {
   storage: diskStorage({
     destination: "./src/static/uploads",
     filename: (req, file, cb) => {
-      const filename: string = randomUUID() + ".jpg";
+      const uuid = randomUUID();
+      const fileExt = file.originalname.split(".").pop();
+      const filename: string = `${uuid}.${fileExt}`;
 
       cb(null, filename);
     },
@@ -65,8 +65,9 @@ export class AnnouncementController {
   @ApiOperation({ summary: "Создать объявления из парсера" })
   @ApiResponse({ status: 201, type: Announcement })
   @ApiBearerAuth()
+  @ApiBody({ type: [CreateAnnouncementDto] })
   @Post("add")
-  create(@Body() createAnnouncementDto: Array<CreateAnnouncementDto>) {
+  create(@Body() createAnnouncementDto: CreateAnnouncementDto[]) {
     return this.announcementService.create(createAnnouncementDto);
   }
 
@@ -185,19 +186,36 @@ export class AnnouncementController {
   }
 
   @ApiOperation({ summary: "Обновить объявление" })
-  @ApiResponse({ status: 200, type: Announcement })
+  @ApiOkResponse({
+    type: Announcement,
+    description: "Объявление успешно обновлено",
+  })
   @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
   @Patch(":id")
+  @UseInterceptors(FilesInterceptor("photos", 10, storage))
   update(
+    @UploadedFile() photos: Array<Express.Multer.File>,
     @Param("id") id: string,
-    @Body() updateAnnouncementDto: UpdateAnnouncementDto
+    @Body() updateAnnouncementDto: UpdateAnnouncementDto,
+    @Query() isRemoveInitImages: string,
+    @Req() req: Request
   ) {
-    return this.announcementService.update(+id, updateAnnouncementDto);
+    return this.announcementService.update(
+      +id,
+      updateAnnouncementDto,
+      isRemoveInitImages,
+      req
+    );
   }
 
   @ApiOperation({ summary: "Удалить объявление" })
-  @ApiResponse({ status: 200, type: Announcement })
+  @ApiOkResponse({
+    type: Announcement,
+    description: "Объявление успешно удалено",
+  })
   @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
   @Delete(":id")
   remove(@Param("id") id: string) {
     return this.announcementService.remove(+id);

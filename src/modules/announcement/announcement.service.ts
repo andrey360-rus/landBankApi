@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus, Injectable } from "@nestjs/common";
+import {HttpException, HttpStatus, Injectable, NotFoundException} from "@nestjs/common";
 import { CreateAnnouncementDto } from "./dto/create-announcement.dto";
 import { UpdateAnnouncementDto } from "./dto/update-announcement.dto";
 import { InjectConnection } from "@nestjs/typeorm";
@@ -14,6 +14,8 @@ import { AddToFavoritiesDto } from "./dto/add-to-favorities.dto";
 import { User } from "../users/entities/users.entity";
 import { Request } from "express";
 import { GetCoordsByAddressService } from "src/utils/get-coords-by-address/get-coords-by-address.service";
+import { deleteStaticFiles } from "src/utils/deleteStaticFiles";
+import { myAnnouncementDomain } from "src/modules/announcement/announcement.consts";
 
 @Injectable()
 export class AnnouncementService {
@@ -26,11 +28,16 @@ export class AnnouncementService {
   ) {}
 
   async create(data: Array<CreateAnnouncementDto>) {
-    return await this.connection.manager.save(Announcement, data);
+    try {
+      await this.connection.manager.save(Announcement, data);
+      return { message: "Announcement added" };
+    } catch (error) {
+      throw new NotFoundException("Ошибка при добавлении объявлений");
+    }
   }
 
   async createOne(req: Request) {
-    let {
+    const {
       area,
       description,
       is_rent,
@@ -61,7 +68,7 @@ export class AnnouncementService {
       land_use,
       price,
       title,
-      area,
+      area: area * 10_000,
       photos,
       address,
       land_class: null,
@@ -81,7 +88,7 @@ export class AnnouncementService {
       date_updated: null,
       owner_name: null,
       cadastral_number: null,
-      domain: "bank-zemel.ru",
+      domain: myAnnouncementDomain,
       url: null,
       user: {
         id: Number(userId),
@@ -97,7 +104,7 @@ export class AnnouncementService {
   }
 
   async findAll(queryParams: GetAnnouncementsDto) {
-    let {
+    const {
       limit,
       page,
       price_to,
@@ -128,31 +135,31 @@ export class AnnouncementService {
 
     const sortingElement = JSON.parse(sorting);
 
-    let offset = page * limit - limit;
+    const offset = page * limit - limit;
 
     const MIN = 1;
     const MAX = 100_000_000_000;
 
-    const priceFrom = !!price_from ? price_from : MIN;
-    const priceTo = !!price_to ? price_to : MAX;
+    const priceFrom = price_from ? price_from : MIN;
+    const priceTo = price_to ? price_to : MAX;
 
     let areaFrom: number;
     let areaTo: number;
 
     switch (areaUnit) {
       case "hectares":
-        areaFrom = !!area_from ? area_from * 10_000 : MIN;
-        areaTo = !!area_to ? area_to * 10_000 : MAX;
+        areaFrom = area_from ? area_from * 10_000 : MIN;
+        areaTo = area_to ? area_to * 10_000 : MAX;
         break;
 
       case "acres":
-        areaFrom = !!area_from ? area_from * 100 : MIN;
-        areaTo = !!area_to ? area_to * 100 : MAX;
+        areaFrom = area_from ? area_from * 100 : MIN;
+        areaTo = area_to ? area_to * 100 : MAX;
         break;
 
       case "sm":
-        areaFrom = !!area_from ? area_from : MIN;
-        areaTo = !!area_from ? area_from : MAX;
+        areaFrom = area_from ? area_from : MIN;
+        areaTo = area_from ? area_from : MAX;
         break;
     }
 
@@ -258,12 +265,98 @@ export class AnnouncementService {
     return announcement;
   }
 
-  update(id: number, updateAnnouncementDto: UpdateAnnouncementDto) {
-    return `This action updates a #${id} announcement`;
+  // метод вроде обрабатывает и свои объявления, и из парсера
+  async update(
+    id: number,
+    updateAnnouncementDto: UpdateAnnouncementDto,
+    isRemoveInitImages: string,
+    req: Request
+  ) {
+    const nowDate = this.datesService.formateDate(new Date());
+
+    const announcement = await this.connection.manager.findOne(Announcement, {
+      where: { id },
+      relations: ["user"],
+    });
+
+    const files: any = req.files;
+
+    const newPhotos = files.map((file) => file.filename);
+
+    const { area, removableFiles, address } = updateAnnouncementDto;
+
+    let coords: { lat: number; lon: number };
+    if (address) {
+      coords = await this.getCoordsByAddressService.getCoords(address);
+    }
+
+    let removableFilesArr: string[] | string = removableFiles;
+
+    if (typeof removableFiles === "string") {
+      removableFilesArr = [removableFiles];
+    }
+
+    const newArea = area * 10_000;
+
+    let newAnnouncementPhotos: string[];
+
+    if (isRemoveInitImages === "true") {
+      if (announcement.domain === myAnnouncementDomain) {
+        if (announcement.photos.length) {
+          announcement.photos.forEach((photo) => deleteStaticFiles(photo));
+        }
+      }
+
+      newAnnouncementPhotos = newPhotos;
+    } else {
+      if (removableFilesArr && removableFilesArr.length) {
+        removableFilesArr.forEach((photo) => {
+          if (announcement.photos.includes(photo)) {
+            deleteStaticFiles(photo);
+
+            const index = announcement.photos.indexOf(photo);
+
+            if (index !== -1) {
+              announcement.photos.splice(index, 1);
+            }
+          }
+        });
+      }
+
+      newAnnouncementPhotos = announcement.photos.concat(newPhotos);
+    }
+
+    const announcementOptions = {
+      ...announcement,
+      ...updateAnnouncementDto,
+      area: newArea,
+      date_updated: nowDate,
+      photos: newAnnouncementPhotos,
+      ...(coords && { lat: coords.lat, lon: coords.lon }),
+    };
+
+    const editAnnouncement = await this.connection.manager.save(
+      Announcement,
+      announcementOptions
+    ); // метод update не хочет работать, выдает ошибку, что не может найти сущность userId
+
+    return editAnnouncement;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} announcement`;
+  async remove(id: number) {
+    const announcement = await this.connection.manager.findOne(Announcement, {
+      where: { id },
+    });
+
+    if (announcement.domain === myAnnouncementDomain) {
+      if (announcement.photos.length) {
+        announcement.photos.forEach((photo) => deleteStaticFiles(photo));
+      }
+    }
+
+    await this.connection.manager.delete(Announcement, { id });
+
+    return announcement;
   }
 
   async getAllUniqueValuesByProp(prop: string) {
@@ -322,7 +415,7 @@ export class AnnouncementService {
 
     const announcement = await this.findOne(announcementId);
 
-    if (favoritiesAnnouncements.totalCount && announcement) {
+    if (announcement) {
       const match = favoritiesAnnouncements.listAnnouncement.find(
         (favoriteAnnouncement) => favoriteAnnouncement.id === announcement.id
       );

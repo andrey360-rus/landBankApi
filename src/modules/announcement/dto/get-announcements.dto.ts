@@ -63,4 +63,8 @@ export class GetAnnouncementsDto {
   @ApiProperty()
   @ApiPropertyOptional()
   sorting: string;
+
+  @ApiProperty()
+  @ApiPropertyOptional()
+  provideTag: string;
 }

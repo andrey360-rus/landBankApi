@@ -124,7 +124,10 @@ export class AnnouncementService {
       land_use,
       land_category,
       sorting,
+      provideTag,
     } = queryParams;
+
+    const isMapMethod = provideTag === "Ads_map";
 
     let { limit, page } = queryParams;
 
@@ -175,6 +178,16 @@ export class AnnouncementService {
 
     let [listAnnouncement, totalCount] =
       await this.connection.manager.findAndCount(Announcement, {
+        ...(isMapMethod && {
+          select: {
+            id: true,
+            lat: true,
+            lon: true,
+            area: true,
+            photos: true,
+            domain: true,
+          },
+        }),
         order: {
           ...sortingElement,
         },
@@ -239,26 +252,28 @@ export class AnnouncementService {
       listAnnouncement = listAnnouncement.slice(offset, limit * page);
     }
 
-    switch (areaUnit) {
-      case "acres":
-        listAnnouncement.forEach((announcement) => {
-          announcement.title = `Участок ${announcement.area / 100} сотки`;
-        });
-        break;
+    if (!isMapMethod) {
+      switch (areaUnit) {
+        case "acres":
+          listAnnouncement.forEach((announcement) => {
+            announcement.title = `Участок ${announcement.area / 100} сотки`;
+          });
+          break;
 
-      case "sm":
-        listAnnouncement.forEach((announcement) => {
-          announcement.title = `Участок ${announcement.area.toFixed()} кв.м`;
-        });
-        break;
+        case "sm":
+          listAnnouncement.forEach((announcement) => {
+            announcement.title = `Участок ${announcement.area.toFixed()} кв.м`;
+          });
+          break;
 
-      case "hectares":
-        listAnnouncement.forEach((announcement) => {
-          announcement.title = `Участок ${(announcement.area / 10_000).toFixed(
-            4
-          )} га `;
-        });
-        break;
+        case "hectares":
+          listAnnouncement.forEach((announcement) => {
+            announcement.title = `Участок ${(
+              announcement.area / 10_000
+            ).toFixed(4)} га `;
+          });
+          break;
+      }
     }
 
     return { listAnnouncement, totalCount };

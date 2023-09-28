@@ -57,7 +57,7 @@ export class AuthService {
 
     const user = await this.userService.create({ ...data, password: hashPass });
 
-    const token = await this.generateToken(user);
+    const token = await this.generateToken(user as User);
 
     return { user, token };
   }

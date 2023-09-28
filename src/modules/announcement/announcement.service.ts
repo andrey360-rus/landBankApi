@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import {
   HttpException,
   HttpStatus,
@@ -7,7 +8,7 @@ import {
 import { CreateAnnouncementDto } from "./dto/create-announcement.dto";
 import { UpdateAnnouncementDto } from "./dto/update-announcement.dto";
 import { InjectConnection } from "@nestjs/typeorm";
-import { Between, In } from "typeorm";
+import { Between, ILike, In, LessThan, MoreThan, Raw } from "typeorm";
 import { Connection } from "typeorm";
 import { Announcement } from "./entities/announcement.entity";
 import { GetAnnouncementsDto } from "./dto/get-announcements.dto";
@@ -111,6 +112,8 @@ export class AnnouncementService {
 
   async findAll(queryParams: GetAnnouncementsDto) {
     const {
+      limit,
+      page,
       price_to,
       price_from,
       area_to,
@@ -126,8 +129,6 @@ export class AnnouncementService {
       sorting,
     } = queryParams;
 
-    let { limit, page } = queryParams;
-
     const domainArray = decodeURIComponent(domain).split(",") || undefined;
 
     const landCategoryArr =
@@ -136,8 +137,8 @@ export class AnnouncementService {
     const landUseArr = decodeURIComponent(land_use).split(",") || undefined;
 
     const addressArr = decodeURIComponent(address).split(",") || undefined;
-
-    const keywordArr = decodeURIComponent(keyword).split(" ") || undefined;
+    const newAddressArr = addressArr.map((address) => address.split(" "));
+    const flattenedAddresses = Array.prototype.concat.apply([], newAddressArr);
 
     const sortingElement = JSON.parse(sorting);
 
@@ -146,6 +147,18 @@ export class AnnouncementService {
     if (limit) {
       offset = page * limit - limit;
     }
+
+    // let dayAgo: string;
+
+    // if (date_range) {
+    //   dayAgo = new Date(
+    //     new Date().setDate(new Date().getDate() - Number(date_range))
+    //   )
+    //     .toISOString()
+    //     .slice(0, 19)
+    //     .replace("T", " ");
+    // }
+    // console.log(new Date().toISOString().slice(0, 19).replace("T", " "));
 
     const MIN = 1;
     const MAX = 100_000_000_000;
@@ -183,8 +196,32 @@ export class AnnouncementService {
           area: Between(areaFrom, areaTo),
           is_rent,
           ...(domain && { domain: In(domainArray) }),
+          // ...(domain && {
+          //   domain: Raw((alias) => `${alias} IN (:...domainArr)`, {
+          //     domainArr: domainArray,
+          //   }),
+          // }),
           ...(land_use && { land_use: In(landUseArr) }),
           ...(land_category && { land_category: In(landCategoryArr) }),
+          ...(address && {
+            address: Raw(
+              (alias) => `string_to_array(${alias}, ' ') && :addresses`,
+              {
+                addresses: flattenedAddresses,
+              }
+            ),
+          }),
+
+          ...(keyword && {
+            description: ILike(`%${decodeURIComponent(keyword)}%`),
+          }),
+          // строковый тип поля не преобразуется при DATE()
+          // ...(date_range && {
+          //   date_published: Raw((alias) => `DATE(${alias}) < ${dayAgo}`),
+          // }),
+          // ...(date_range && {
+          //   date_published: LessThan(dayAgo),
+          // }),
         },
         ...(limit && {
           skip: offset,
@@ -192,33 +229,11 @@ export class AnnouncementService {
         }),
       });
 
-    limit = 100;
-    page = 1;
-    offset = page * limit - limit;
-
-    if (address) {
-      listAnnouncement = listAnnouncement.filter((announcement) =>
-        addressArr.find((address) => announcement.address.includes(address))
-      );
-
-      totalCount = listAnnouncement.length;
-
-      listAnnouncement = listAnnouncement.slice(offset, limit * page);
-    }
-
-    if (keyword) {
-      listAnnouncement = listAnnouncement.filter((announcement) =>
-        keywordArr.every((keyword) =>
-          announcement.description.includes(keyword.toLowerCase())
-        )
-      );
-
-      totalCount = listAnnouncement.length;
-
-      listAnnouncement = listAnnouncement.slice(offset, limit * page);
-    }
-
     if (date_range) {
+      const limit = 100,
+        page = 1,
+        offset = page * limit - limit;
+
       const now = new Date();
       const dayAgo = new Date(now.setDate(now.getDate() - Number(date_range)));
 

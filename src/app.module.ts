@@ -10,7 +10,6 @@ import { join } from "path";
 import { MailerModule } from "@nestjs-modules/mailer";
 import { ConfigModule } from "@nestjs/config";
 
-
 @Module({
   imports: [
     DatabaseModule,
@@ -21,6 +20,7 @@ import { ConfigModule } from "@nestjs/config";
     NotesModule,
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, "..", "src", "static", "uploads"),
+      serveRoot: "/images",
     }),
     MailerModule.forRoot({
       transport: {

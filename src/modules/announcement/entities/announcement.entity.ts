@@ -87,7 +87,7 @@ export class Announcement {
     nullable: true,
     required: false,
   })
-  @Column({ nullable: true })
+  @Column("text", { nullable: true })
   land_category: string;
 
   @ApiProperty({
@@ -95,17 +95,17 @@ export class Announcement {
     description: "Вид объекта",
     nullable: true,
   })
-  @Column({ nullable: true })
+  @Column("text", { nullable: true })
   land_use: string;
 
   @ApiProperty({
     required: false,
   })
-  @Column({ nullable: true })
+  @Column("text", { nullable: true })
   land_class: string;
 
   @ApiProperty({ required: false })
-  @Column({ nullable: true })
+  @Column("text", { nullable: true })
   land_plot_title: string;
 
   @ApiProperty()
@@ -145,7 +145,7 @@ export class Announcement {
   flat_land_level: boolean;
 
   @ApiProperty()
-  @Column({ nullable: true })
+  @Column("text", { nullable: true })
   phone: string;
 
   @ApiProperty()
@@ -157,34 +157,34 @@ export class Announcement {
   lon: number;
 
   @ApiProperty()
-  @Column({ nullable: true })
+  @Column("text", { nullable: true })
   date_published: string;
 
   @ApiProperty()
-  @Column({ nullable: true })
+  @Column("text", { nullable: true })
   date_updated: string;
 
   @ApiProperty()
-  @Column({ nullable: true })
+  @Column("text", { nullable: true })
   owner_name: string;
 
   @ApiProperty()
-  @Column({ nullable: true })
+  @Column("text", { nullable: true })
   cadastral_number: string;
 
   @ApiProperty()
-  @Column({ nullable: true })
+  @Column("text", { nullable: true })
   domain: string;
 
   @ApiProperty()
-  @Column({ nullable: true })
+  @Column("text", { nullable: true })
   url: string;
 
   @ApiProperty({
     example: false,
     description: "Флаг проверки объявления",
   })
-  @Column({ nullable: true })
+  @Column("boolean", { nullable: true })
   isChecked: boolean;
 
   @ManyToMany(() => User, (user) => user.favoritiesAnnouncements, {

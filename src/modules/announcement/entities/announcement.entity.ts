@@ -57,7 +57,7 @@ export class Announcement {
       "Ставропольский край, Шпаковский муниципальный округ, Орловка садовое товарищество",
     description: "Адрес объекта",
   })
-  @Column()
+  @Column("text")
   address: string;
 
   @ApiProperty({

@@ -128,6 +128,7 @@ export class AnnouncementService {
       land_category,
       sorting,
       provideTag,
+      userId,
     } = queryParams;
 
     const isMapMethod = provideTag === "Ads_map";
@@ -235,6 +236,7 @@ export class AnnouncementService {
           // ...(date_range && {
           //   date_published: LessThan(dayAgo),
           // }),
+          ...(userId && { user: { id: userId } }),
         },
         ...(limit && {
           skip: offset,

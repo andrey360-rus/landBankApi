@@ -67,4 +67,8 @@ export class GetAnnouncementsDto {
   @ApiProperty()
   @ApiPropertyOptional()
   provideTag: string;
+
+  @ApiProperty()
+  @ApiPropertyOptional()
+  userId: number;
 }

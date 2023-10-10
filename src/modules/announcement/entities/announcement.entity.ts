@@ -14,13 +14,13 @@ import { Note } from "src/modules/notes/entities/notes.entity";
 @Entity("announcement")
 @Index([
   "area",
-  "address",
   "price",
   "domain",
   "land_category",
   "land_use",
   "is_rent",
   "date_published",
+  "regionKladrId",
 ])
 export class Announcement {
   @ApiProperty({

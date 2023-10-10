@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import {
   HttpException,
   HttpStatus,
@@ -8,7 +7,7 @@ import {
 import { CreateAnnouncementDto } from "./dto/create-announcement.dto";
 import { UpdateAnnouncementDto } from "./dto/update-announcement.dto";
 import { InjectConnection } from "@nestjs/typeorm";
-import { Between, ILike, In, LessThan, MoreThan, Raw } from "typeorm";
+import { Between, ILike, In, MoreThanOrEqual } from "typeorm";
 import { Connection } from "typeorm";
 import { Announcement } from "./entities/announcement.entity";
 import { GetAnnouncementsDto } from "./dto/get-announcements.dto";
@@ -33,9 +32,31 @@ export class AnnouncementService {
     private readonly getCoordsByAddressService: GetCoordsByAddressService
   ) {}
 
-  async create(data: Array<CreateAnnouncementDto>) {
+  async create_v2(data: Array<CreateAnnouncementDto>) {
     try {
+      this.dateGeneration(data);
       await this.connection.manager.save(Announcement, data);
+      return { message: "Announcement added" };
+    } catch (error) {
+      throw new NotFoundException("Ошибка при добавлении объявлений");
+    }
+  }
+
+  async create(data: Array<CreateAnnouncementDto>) {
+    const limit = await this.checkBalanceRequestApiDaData();
+
+    if (data.length > limit) {
+      throw new HttpException(
+        `Единожды можно добавить не больше ${limit} объявлений`,
+        HttpStatus.BAD_REQUEST
+      );
+    }
+
+    try {
+      this.dateGeneration(data);
+      const formationData = await this.regionKladrIdGeneration(data);
+
+      await this.connection.manager.save(Announcement, formationData);
       return { message: "Announcement added" };
     } catch (error) {
       throw new NotFoundException("Ошибка при добавлении объявлений");
@@ -52,21 +73,33 @@ export class AnnouncementService {
       price,
       title,
       address,
+      regionKladrId,
+      geo_lat,
+      geo_lon,
       userId,
     } = req.body;
 
-    const encodeAddress = encodeURIComponent(address);
+    const limit = await this.checkBalanceRequestApiDaData();
 
-    const { lat, lon } = await this.getCoordsByAddressService.getCoords(
-      encodeAddress
-    );
+    if (limit === 0) {
+      throw new HttpException(
+        "Превышена квота запросов, попробуйте позже!",
+        HttpStatus.BAD_REQUEST
+      );
+    }
+
+    const encodeAddress = encodeURIComponent(address);
+    let coords: { lat: number; lon: number };
+    if (!geo_lat && !geo_lon) {
+      coords = await this.getCoordsByAddressService.getCoords(encodeAddress);
+    }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const files: any = req.files;
 
     const photos = files.map((file) => file.filename);
 
-    const date_published = this.datesService.formateDate(new Date());
+    const date_published = new Date().toISOString();
 
     const announcementOptions = {
       description,
@@ -89,14 +122,16 @@ export class AnnouncementService {
       highway_proximity: null,
       flat_land_level: null,
       phone: null,
-      lat,
-      lon,
+      lat: geo_lat ? geo_lat : coords.lat,
+      lon: geo_lon ? geo_lon : coords.lon,
       date_published,
       date_updated: null,
       owner_name: null,
       cadastral_number: null,
       domain: myAnnouncementDomain,
       url: null,
+      regionKladrId,
+      isChecked: false,
       user: {
         id: Number(userId),
       },
@@ -129,6 +164,7 @@ export class AnnouncementService {
       sorting,
       provideTag,
       userId,
+      geoBounds,
     } = queryParams;
 
     const isMapMethod = provideTag === "Ads_map";
@@ -141,37 +177,36 @@ export class AnnouncementService {
     const landUseArr = decodeURIComponent(land_use).split(",") || undefined;
 
     const addressArr = decodeURIComponent(address).split(",") || undefined;
-    const newAddressArr = addressArr.map((address) => address.split(" "));
-    const flattenedAddresses = Array.prototype.concat.apply([], newAddressArr);
 
     const sortingElement = JSON.parse(sorting);
 
+    const geoBoundsArr =
+      decodeURIComponent(geoBounds)
+        .split(",")
+        .map((coords) => +coords) || undefined;
+
     let offset: number | undefined;
 
-    if (limit) {
-      offset = page * limit - limit;
-    }
-
-    // let dayAgo: string;
-
-    // if (date_range) {
-    //   dayAgo = new Date(
-    //     new Date().setDate(new Date().getDate() - Number(date_range))
-    //   )
-    //     .toISOString()
-    //     .slice(0, 19)
-    //     .replace("T", " ");
-    // }
-    // console.log(new Date().toISOString().slice(0, 19).replace("T", " "));
+    let dayAgo: Date | undefined;
 
     const MIN = 1;
-    const MAX = 100_000_000_000;
+    const MAX = Infinity;
 
     const priceFrom = price_from ? price_from : MIN;
     const priceTo = price_to ? price_to : MAX;
 
     let areaFrom: number;
     let areaTo: number;
+
+    if (limit) {
+      offset = page * limit - limit;
+    }
+
+    if (date_range) {
+      dayAgo = new Date(
+        new Date().setDate(new Date().getDate() - Number(date_range))
+      );
+    }
 
     switch (areaUnit) {
       case "hectares":
@@ -190,7 +225,7 @@ export class AnnouncementService {
         break;
     }
 
-    let [listAnnouncement, totalCount] =
+    const [listAnnouncement, totalCount] =
       await this.connection.manager.findAndCount(Announcement, {
         ...(isMapMethod && {
           select: {
@@ -198,8 +233,6 @@ export class AnnouncementService {
             lat: true,
             lon: true,
             area: true,
-            photos: true,
-            domain: true,
           },
         }),
         order: {
@@ -210,32 +243,21 @@ export class AnnouncementService {
           area: Between(areaFrom, areaTo),
           is_rent,
           ...(domain && { domain: In(domainArray) }),
-          // ...(domain && {
-          //   domain: Raw((alias) => `${alias} IN (:...domainArr)`, {
-          //     domainArr: domainArray,
-          //   }),
-          // }),
           ...(land_use && { land_use: In(landUseArr) }),
           ...(land_category && { land_category: In(landCategoryArr) }),
           ...(address && {
-            address: Raw(
-              (alias) => `string_to_array(${alias}, ' ') && :addresses`,
-              {
-                addresses: flattenedAddresses,
-              }
-            ),
+            regionKladrId: In(addressArr),
           }),
-
           ...(keyword && {
             description: ILike(`%${decodeURIComponent(keyword)}%`),
           }),
-          // строковый тип поля не преобразуется при DATE()
-          // ...(date_range && {
-          //   date_published: Raw((alias) => `DATE(${alias}) < ${dayAgo}`),
-          // }),
-          // ...(date_range && {
-          //   date_published: LessThan(dayAgo),
-          // }),
+          ...(date_range && {
+            date_published: MoreThanOrEqual(dayAgo),
+          }),
+          ...(isMapMethod && {
+            lat: Between(geoBoundsArr[0], geoBoundsArr[2]),
+            lon: Between(geoBoundsArr[1], geoBoundsArr[3]),
+          }),
           ...(userId && { user: { id: userId } }),
         },
         ...(limit && {
@@ -243,31 +265,6 @@ export class AnnouncementService {
           take: limit,
         }),
       });
-
-    if (date_range) {
-      const limit = 100,
-        page = 1,
-        offset = page * limit - limit;
-
-      const now = new Date();
-      const dayAgo = new Date(now.setDate(now.getDate() - Number(date_range)));
-
-      listAnnouncement = listAnnouncement.filter((announcement) => {
-        if (announcement.date_published) {
-          const date_published = this.datesService.parseDate(
-            announcement.date_published
-          );
-
-          return date_published >= dayAgo;
-        }
-
-        return false;
-      });
-
-      totalCount = listAnnouncement.length;
-
-      listAnnouncement = listAnnouncement.slice(offset, limit * page);
-    }
 
     if (!isMapMethod) {
       switch (areaUnit) {
@@ -318,8 +315,6 @@ export class AnnouncementService {
     isRemoveInitImages: string,
     req: Request
   ) {
-    const nowDate = this.datesService.formateDate(new Date());
-
     const announcement = await this.connection.manager.findOne(Announcement, {
       where: { id },
       relations: ["user"],
@@ -373,11 +368,13 @@ export class AnnouncementService {
       newAnnouncementPhotos = announcement.photos.concat(newPhotos);
     }
 
+    const date_updated = new Date().toISOString().slice(0, 10);
+
     const announcementOptions = {
       ...announcement,
       ...updateAnnouncementDto,
       area: newArea,
-      date_updated: nowDate,
+      date_updated,
       photos: newAnnouncementPhotos,
       ...(coords && { lat: coords.lat, lon: coords.lon }),
     };
@@ -518,5 +515,104 @@ export class AnnouncementService {
       "Пользователь или объявление не найдены",
       HttpStatus.NOT_FOUND
     );
+  }
+
+  private dateGeneration(data: CreateAnnouncementDto[]) {
+    data.forEach((announcement) => {
+      const { date_published, date_updated } = announcement;
+      if (date_published && date_updated && date_published !== "NULL") {
+        const dateArr = [date_published, date_updated];
+
+        const newDateArr = dateArr.map((date) => {
+          const parseDate = this.datesService.parseDate(date);
+
+          const generatedDate = this.datesService.formateDate(parseDate);
+
+          return generatedDate;
+        });
+
+        announcement.date_published = newDateArr[0];
+        announcement.date_updated = newDateArr[1];
+      }
+    });
+
+    return data;
+  }
+
+  private async regionKladrIdGeneration(data: CreateAnnouncementDto[]) {
+    for (const announcement of data) {
+      const regionKladrId = await this.getRegionKladrId({
+        lat: announcement.lat,
+        lon: announcement.lon,
+      });
+
+      announcement.regionKladrId = regionKladrId || null;
+    }
+
+    return data;
+  }
+
+  private async getRegionKladrId(announcementCoords: {
+    lat: number;
+    lon: number;
+  }) {
+    const url =
+      "https://suggestions.dadata.ru/suggestions/api/4_1/rs/geolocate/address";
+    const token = process.env.DADATA_API_KEY;
+    const { lat, lon } = announcementCoords;
+    const query = { lat, lon };
+    const options = {
+      method: "POST",
+      mode: "cors" as RequestMode,
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        Authorization: "Token " + token,
+      },
+      body: JSON.stringify(query),
+    };
+
+    try {
+      const res = await fetch(url, options);
+      const resJson = await res.json();
+
+      if (!resJson.suggestions.length) {
+        return undefined;
+      }
+
+      const regionKladrId: string =
+        resJson.suggestions[0].data.region_kladr_id.toString();
+
+      return regionKladrId;
+    } catch (error) {
+      throw new HttpException("Некорректный адрес", HttpStatus.BAD_REQUEST);
+    }
+  }
+
+  private async checkBalanceRequestApiDaData() {
+    const url = "https://dadata.ru/api/v2/stat/daily";
+    const token = process.env.DADATA_API_KEY;
+    const secret = process.env.DADATA_SECRET_KEY;
+
+    const options = {
+      method: "GET",
+      mode: "cors" as RequestMode,
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Token " + token,
+        "X-Secret": secret,
+      },
+    };
+
+    try {
+      const res = await fetch(url, options);
+      const resJson = await res.json();
+
+      const limitSuggestions: number = resJson.remaining.suggestions;
+
+      return limitSuggestions;
+    } catch (error) {
+      throw new HttpException("Произошла ошибка!", HttpStatus.BAD_REQUEST);
+    }
   }
 }

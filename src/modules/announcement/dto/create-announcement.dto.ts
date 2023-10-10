@@ -173,4 +173,10 @@ export class CreateAnnouncementDto {
   })
   @ApiPropertyOptional()
   isChecked: boolean;
+
+  @ApiProperty({
+    example: "7700000000000",
+    description: "КЛАДР-код региона",
+  })
+  regionKladrId: string;
 }

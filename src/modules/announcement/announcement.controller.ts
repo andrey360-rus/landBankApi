@@ -17,7 +17,8 @@ import { CreateAnnouncementDto } from "./dto/create-announcement.dto";
 import { UpdateAnnouncementDto } from "./dto/update-announcement.dto";
 import {
   ApiBadRequestResponse,
-  ApiBearerAuth, ApiBody,
+  ApiBearerAuth,
+  ApiBody,
   ApiCreatedResponse,
   ApiForbiddenResponse,
   ApiOkResponse,
@@ -61,6 +62,15 @@ const storage = {
 @ApiTags("Объявления")
 export class AnnouncementController {
   constructor(private readonly announcementService: AnnouncementService) {}
+
+  @ApiOperation({ summary: "Создать объявления из парсера" })
+  @ApiResponse({ status: 201, type: Announcement })
+  @ApiBearerAuth()
+  @ApiBody({ type: [CreateAnnouncementDto] })
+  @Post("add_v2")
+  create_v2(@Body() createAnnouncementDto: CreateAnnouncementDto[]) {
+    return this.announcementService.create_v2(createAnnouncementDto);
+  }
 
   @ApiOperation({ summary: "Создать объявления из парсера" })
   @ApiResponse({ status: 201, type: Announcement })

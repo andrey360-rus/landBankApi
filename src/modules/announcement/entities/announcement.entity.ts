@@ -157,12 +157,12 @@ export class Announcement {
   lon: number;
 
   @ApiProperty()
-  @Column("text", { nullable: true })
-  date_published: string;
+  @Column("timestamp", { nullable: true })
+  date_published: Date;
 
   @ApiProperty()
-  @Column("text", { nullable: true })
-  date_updated: string;
+  @Column("timestamp", { nullable: true })
+  date_updated: Date;
 
   @ApiProperty()
   @Column("text", { nullable: true })
@@ -186,6 +186,10 @@ export class Announcement {
   })
   @Column("boolean", { nullable: true })
   isChecked: boolean;
+
+  @ApiProperty()
+  @Column("text", { nullable: true })
+  regionKladrId: string;
 
   @ManyToMany(() => User, (user) => user.favoritiesAnnouncements, {
     onDelete: "CASCADE",

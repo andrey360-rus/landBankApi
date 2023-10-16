@@ -1,11 +1,9 @@
 import { randomUUID } from "crypto";
 import { diskStorage } from "multer";
 
-export const myAnnouncementDomain = "bank-zemel.ru";
-
 export const storage = {
   storage: diskStorage({
-    destination: "./src/static/uploads",
+    destination: "./src/static/articles",
     filename: (req, file, cb) => {
       const uuid = randomUUID();
       const fileExt = file.originalname.split(".").pop();

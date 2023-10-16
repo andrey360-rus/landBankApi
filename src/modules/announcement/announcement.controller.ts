@@ -17,7 +17,8 @@ import { CreateAnnouncementDto } from "./dto/create-announcement.dto";
 import { UpdateAnnouncementDto } from "./dto/update-announcement.dto";
 import {
   ApiBadRequestResponse,
-  ApiBearerAuth, ApiBody,
+  ApiBearerAuth,
+  ApiBody,
   ApiCreatedResponse,
   ApiForbiddenResponse,
   ApiOkResponse,
@@ -40,22 +41,8 @@ import {
 } from "./swagger/api-response/match-favorite-announcement.type";
 import { AddToFavoritiesAnnouncementsErrorResponse } from "./swagger/api-response/add-to-favorite-announcements.type";
 import { FilesInterceptor } from "@nestjs/platform-express";
-import { diskStorage } from "multer";
-import { randomUUID } from "crypto";
 import { Request } from "express";
-
-const storage = {
-  storage: diskStorage({
-    destination: "./src/static/uploads",
-    filename: (req, file, cb) => {
-      const uuid = randomUUID();
-      const fileExt = file.originalname.split(".").pop();
-      const filename = `${uuid}.${fileExt}`;
-
-      cb(null, filename);
-    },
-  }),
-};
+import { storage } from "./announcement.consts";
 
 @Controller("announcements")
 @ApiTags("Объявления")

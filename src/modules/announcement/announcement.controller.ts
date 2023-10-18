@@ -50,7 +50,7 @@ const storage = {
     filename: (req, file, cb) => {
       const uuid = randomUUID();
       const fileExt = file.originalname.split(".").pop();
-      const filename: string = `${uuid}.${fileExt}`;
+      const filename = `${uuid}.${fileExt}`;
 
       cb(null, filename);
     },

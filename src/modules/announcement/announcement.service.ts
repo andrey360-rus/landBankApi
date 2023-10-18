@@ -1,8 +1,14 @@
-import {HttpException, HttpStatus, Injectable, NotFoundException} from "@nestjs/common";
+/* eslint-disable @typescript-eslint/no-unused-vars */
+import {
+  HttpException,
+  HttpStatus,
+  Injectable,
+  NotFoundException,
+} from "@nestjs/common";
 import { CreateAnnouncementDto } from "./dto/create-announcement.dto";
 import { UpdateAnnouncementDto } from "./dto/update-announcement.dto";
 import { InjectConnection } from "@nestjs/typeorm";
-import { Between, In } from "typeorm";
+import { Between, ILike, In, LessThan, MoreThan, Raw } from "typeorm";
 import { Connection } from "typeorm";
 import { Announcement } from "./entities/announcement.entity";
 import { GetAnnouncementsDto } from "./dto/get-announcements.dto";
@@ -55,6 +61,7 @@ export class AnnouncementService {
       encodeAddress
     );
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const files: any = req.files;
 
     const photos = files.map((file) => file.filename);
@@ -120,7 +127,11 @@ export class AnnouncementService {
       land_use,
       land_category,
       sorting,
+      provideTag,
+      userId,
     } = queryParams;
+
+    const isMapMethod = provideTag === "Ads_map";
 
     const domainArray = decodeURIComponent(domain).split(",") || undefined;
 
@@ -130,12 +141,28 @@ export class AnnouncementService {
     const landUseArr = decodeURIComponent(land_use).split(",") || undefined;
 
     const addressArr = decodeURIComponent(address).split(",") || undefined;
-
-    const keywordArr = decodeURIComponent(keyword).split(" ") || undefined;
+    const newAddressArr = addressArr.map((address) => address.split(" "));
+    const flattenedAddresses = Array.prototype.concat.apply([], newAddressArr);
 
     const sortingElement = JSON.parse(sorting);
 
-    const offset = page * limit - limit;
+    let offset: number | undefined;
+
+    if (limit) {
+      offset = page * limit - limit;
+    }
+
+    // let dayAgo: string;
+
+    // if (date_range) {
+    //   dayAgo = new Date(
+    //     new Date().setDate(new Date().getDate() - Number(date_range))
+    //   )
+    //     .toISOString()
+    //     .slice(0, 19)
+    //     .replace("T", " ");
+    // }
+    // console.log(new Date().toISOString().slice(0, 19).replace("T", " "));
 
     const MIN = 1;
     const MAX = 100_000_000_000;
@@ -165,6 +192,16 @@ export class AnnouncementService {
 
     let [listAnnouncement, totalCount] =
       await this.connection.manager.findAndCount(Announcement, {
+        ...(isMapMethod && {
+          select: {
+            id: true,
+            lat: true,
+            lon: true,
+            area: true,
+            photos: true,
+            domain: true,
+          },
+        }),
         order: {
           ...sortingElement,
         },
@@ -173,38 +210,45 @@ export class AnnouncementService {
           area: Between(areaFrom, areaTo),
           is_rent,
           ...(domain && { domain: In(domainArray) }),
+          // ...(domain && {
+          //   domain: Raw((alias) => `${alias} IN (:...domainArr)`, {
+          //     domainArr: domainArray,
+          //   }),
+          // }),
           ...(land_use && { land_use: In(landUseArr) }),
           ...(land_category && { land_category: In(landCategoryArr) }),
+          ...(address && {
+            address: Raw(
+              (alias) => `string_to_array(${alias}, ' ') && :addresses`,
+              {
+                addresses: flattenedAddresses,
+              }
+            ),
+          }),
+
+          ...(keyword && {
+            description: ILike(`%${decodeURIComponent(keyword)}%`),
+          }),
+          // строковый тип поля не преобразуется при DATE()
+          // ...(date_range && {
+          //   date_published: Raw((alias) => `DATE(${alias}) < ${dayAgo}`),
+          // }),
+          // ...(date_range && {
+          //   date_published: LessThan(dayAgo),
+          // }),
+          ...(userId && { user: { id: userId } }),
         },
-        ...((!address || !date_range || !keyword) && {
+        ...(limit && {
           skip: offset,
           take: limit,
         }),
       });
 
-    if (address) {
-      listAnnouncement = listAnnouncement.filter((announcement) =>
-        addressArr.find((address) => announcement.address.includes(address))
-      );
-
-      totalCount = listAnnouncement.length;
-
-      listAnnouncement = listAnnouncement.slice(offset, limit * page);
-    }
-
-    if (keyword) {
-      listAnnouncement = listAnnouncement.filter((announcement) =>
-        keywordArr.every((keyword) =>
-          announcement.description.includes(keyword.toLowerCase())
-        )
-      );
-
-      totalCount = listAnnouncement.length;
-
-      listAnnouncement = listAnnouncement.slice(offset, limit * page);
-    }
-
     if (date_range) {
+      const limit = 100,
+        page = 1,
+        offset = page * limit - limit;
+
       const now = new Date();
       const dayAgo = new Date(now.setDate(now.getDate() - Number(date_range)));
 
@@ -225,26 +269,28 @@ export class AnnouncementService {
       listAnnouncement = listAnnouncement.slice(offset, limit * page);
     }
 
-    switch (areaUnit) {
-      case "acres":
-        listAnnouncement.forEach((announcement) => {
-          announcement.title = `Участок ${announcement.area / 100} сотки`;
-        });
-        break;
+    if (!isMapMethod) {
+      switch (areaUnit) {
+        case "acres":
+          listAnnouncement.forEach((announcement) => {
+            announcement.title = `Участок ${announcement.area / 100} сотки`;
+          });
+          break;
 
-      case "sm":
-        listAnnouncement.forEach((announcement) => {
-          announcement.title = `Участок ${announcement.area.toFixed()} кв.м`;
-        });
-        break;
+        case "sm":
+          listAnnouncement.forEach((announcement) => {
+            announcement.title = `Участок ${announcement.area.toFixed()} кв.м`;
+          });
+          break;
 
-      case "hectares":
-        listAnnouncement.forEach((announcement) => {
-          announcement.title = `Участок ${(announcement.area / 10_000).toFixed(
-            4
-          )} га `;
-        });
-        break;
+        case "hectares":
+          listAnnouncement.forEach((announcement) => {
+            announcement.title = `Участок ${(
+              announcement.area / 10_000
+            ).toFixed(4)} га `;
+          });
+          break;
+      }
     }
 
     return { listAnnouncement, totalCount };
@@ -279,6 +325,7 @@ export class AnnouncementService {
       relations: ["user"],
     });
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const files: any = req.files;
 
     const newPhotos = files.map((file) => file.filename);
@@ -357,22 +404,6 @@ export class AnnouncementService {
     await this.connection.manager.delete(Announcement, { id });
 
     return announcement;
-  }
-
-  async getAllUniqueValuesByProp(prop: string) {
-    try {
-      const qb = this.connection.manager.createQueryBuilder();
-
-      const listValue = await qb
-        .select(prop)
-        .from(Announcement, "Announcement")
-        .distinct(true)
-        .getRawMany();
-      return listValue;
-    } catch (error) {
-      console.log(error);
-      return error;
-    }
   }
 
   async toggleChecked(data: ToggleCheckedAnnouncementDto) {

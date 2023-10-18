@@ -333,7 +333,9 @@ export class AnnouncementService {
     if (isRemoveInitImages === "true") {
       if (announcement.domain === myAnnouncementDomain) {
         if (announcement.photos.length) {
-          announcement.photos.forEach((photo) => deleteStaticFiles(photo));
+          announcement.photos.forEach((photo) =>
+            deleteStaticFiles("uploads", photo)
+          );
         }
       }
 
@@ -342,7 +344,7 @@ export class AnnouncementService {
       if (removableFilesArr && removableFilesArr.length) {
         removableFilesArr.forEach((photo) => {
           if (announcement.photos.includes(photo)) {
-            deleteStaticFiles(photo);
+            deleteStaticFiles("uploads", photo);
 
             const index = announcement.photos.indexOf(photo);
 
@@ -380,7 +382,9 @@ export class AnnouncementService {
 
     if (announcement.domain === myAnnouncementDomain) {
       if (announcement.photos.length) {
-        announcement.photos.forEach((photo) => deleteStaticFiles(photo));
+        announcement.photos.forEach((photo) =>
+          deleteStaticFiles("uploads", photo)
+        );
       }
     }
 

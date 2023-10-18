@@ -40,23 +40,9 @@ import {
 } from "./swagger/api-response/match-favorite-announcement.type";
 import { AddToFavoritiesAnnouncementsErrorResponse } from "./swagger/api-response/add-to-favorite-announcements.type";
 import { FilesInterceptor } from "@nestjs/platform-express";
-import { diskStorage } from "multer";
-import { randomUUID } from "crypto";
+import { storage } from "./announcement.consts";
 import { CreateAnnouncementsApiOkResponse } from "./swagger/api-response/create-announcements.type";
 import { CreateOneAnnouncementDto } from "./dto/create-one-announcement.dto";
-
-const storage = {
-  storage: diskStorage({
-    destination: "./src/static/uploads",
-    filename: (req, file, cb) => {
-      const uuid = randomUUID();
-      const fileExt = file.originalname.split(".").pop();
-      const filename = `${uuid}.${fileExt}`;
-
-      cb(null, filename);
-    },
-  }),
-};
 
 @Controller("announcements")
 @ApiTags("Объявления")

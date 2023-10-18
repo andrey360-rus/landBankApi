@@ -9,6 +9,7 @@ import { ServeStaticModule } from "@nestjs/serve-static";
 import { join } from "path";
 import { MailerModule } from "@nestjs-modules/mailer";
 import { ConfigModule } from "@nestjs/config";
+import { NewsModule } from "./modules/news/news.module";
 
 @Module({
   imports: [
@@ -18,9 +19,14 @@ import { ConfigModule } from "@nestjs/config";
     RolesModule,
     AuthModule,
     NotesModule,
+    NewsModule,
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, "..", "src", "static", "uploads"),
       serveRoot: "/images",
+    }),
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, "..", "src", "static", "articles"),
+      serveRoot: "/articles",
     }),
     MailerModule.forRoot({
       transport: {

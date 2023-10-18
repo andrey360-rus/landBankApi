@@ -14,17 +14,17 @@ import { Note } from "src/modules/notes/entities/notes.entity";
 @Entity("announcement")
 @Index([
   "area",
-  "address",
   "price",
   "domain",
   "land_category",
   "land_use",
   "is_rent",
   "date_published",
+  "regionKladrId",
 ])
 export class Announcement {
   @ApiProperty({
-    example: "1",
+    example: 1,
     description: "Уникальный идентификатор объявления",
   })
   @PrimaryGeneratedColumn()
@@ -136,47 +136,68 @@ export class Announcement {
   @Column("boolean", { nullable: true })
   highway_proximity: boolean;
 
-  @ApiProperty()
-  @Column("boolean", { nullable: true })
+  @ApiProperty({
+    example: false,
+    description: "Права пользования",
+  })
+  @Column("boolean")
   is_rent: boolean;
 
   @ApiProperty()
   @Column("boolean", { nullable: true })
   flat_land_level: boolean;
 
-  @ApiProperty()
+  @ApiProperty({
+    example: "79001234567",
+    description: "Номер телефона владельца объявления",
+  })
   @Column("text", { nullable: true })
   phone: string;
 
-  @ApiProperty()
+  @ApiProperty({
+    example: 55.676702,
+    description: "Координата широты",
+  })
   @Column("double precision")
   lat: number;
 
-  @ApiProperty()
+  @ApiProperty({ example: 37.763028, description: "Координата долготы" })
   @Column("double precision")
   lon: number;
 
-  @ApiProperty()
-  @Column("text", { nullable: true })
-  date_published: string;
+  @ApiProperty({ description: "Дата публикации" })
+  @Column("timestamp", { nullable: true })
+  date_published: Date;
 
-  @ApiProperty()
-  @Column("text", { nullable: true })
-  date_updated: string;
+  @ApiProperty({ description: "Дата обновления" })
+  @Column("timestamp", { nullable: true })
+  date_updated: Date;
 
-  @ApiProperty()
+  @ApiProperty({
+    example: "Владислав Черкас",
+    description: "Владелец объявления",
+  })
   @Column("text", { nullable: true })
   owner_name: string;
 
-  @ApiProperty()
+  @ApiProperty({
+    example: "31:16:0123029:163",
+    description: "Кадастровый номер",
+  })
   @Column("text", { nullable: true })
   cadastral_number: string;
 
-  @ApiProperty()
+  @ApiProperty({
+    example: "cian.ru",
+    description: "Домен площадки, где размещено объявление",
+  })
   @Column("text", { nullable: true })
   domain: string;
 
-  @ApiProperty()
+  @ApiProperty({
+    example: "https://stavropol.cian.ru/sale/suburban/285629957/",
+    description: "Адрес источника объявления",
+  })
   @Column("text", { nullable: true })
   url: string;
 
@@ -186,6 +207,13 @@ export class Announcement {
   })
   @Column("boolean", { nullable: true })
   isChecked: boolean;
+
+  @ApiProperty({
+    example: "7700000000000",
+    description: "КЛАДР-код региона",
+  })
+  @Column("text", { nullable: true })
+  regionKladrId: string;
 
   @ManyToMany(() => User, (user) => user.favoritiesAnnouncements, {
     onDelete: "CASCADE",

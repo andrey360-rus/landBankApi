@@ -71,4 +71,10 @@ export class GetAnnouncementsDto {
   @ApiProperty()
   @ApiPropertyOptional()
   userId: number;
+
+  @ApiProperty()
+  regionKladrId: string;
+
+  @ApiProperty()
+  geoBounds?: string;
 }

@@ -1,8 +1,8 @@
 import {
+  BadRequestException,
   HttpException,
   HttpStatus,
   Injectable,
-  NotFoundException,
 } from "@nestjs/common";
 import { CreateAnnouncementDto } from "./dto/create-announcement.dto";
 import { UpdateAnnouncementDto } from "./dto/update-announcement.dto";
@@ -17,10 +17,10 @@ import { GetFavoritiesAnnouncementsDto } from "./dto/get-favorities-announcement
 import { UsersService } from "../users/users.service";
 import { AddToFavoritiesDto } from "./dto/add-to-favorities.dto";
 import { User } from "../users/entities/users.entity";
-import { Request } from "express";
-import { GetCoordsByAddressService } from "src/utils/get-coords-by-address/get-coords-by-address.service";
 import { deleteStaticFiles } from "src/utils/deleteStaticFiles";
 import { myAnnouncementDomain } from "src/modules/announcement/announcement.consts";
+import { CreateOneAnnouncementDto } from "./dto/create-one-announcement.dto";
+import { ICoords } from "./interfaces/announcement.interface";
 
 @Injectable()
 export class AnnouncementService {
@@ -28,17 +28,16 @@ export class AnnouncementService {
     @InjectConnection()
     private readonly connection: Connection,
     private readonly datesService: DatesService,
-    private readonly userService: UsersService,
-    private readonly getCoordsByAddressService: GetCoordsByAddressService
+    private readonly userService: UsersService
   ) {}
 
   async create_v2(data: Array<CreateAnnouncementDto>) {
     try {
       this.dateGeneration(data);
       await this.connection.manager.save(Announcement, data);
-      return { message: "Announcement added" };
+      return { message: "Объявления успешно добавлены" };
     } catch (error) {
-      throw new NotFoundException("Ошибка при добавлении объявлений");
+      throw new BadRequestException("Ошибка при добавлении объявлений");
     }
   }
 
@@ -57,13 +56,16 @@ export class AnnouncementService {
       const formationData = await this.regionKladrIdGeneration(data);
 
       await this.connection.manager.save(Announcement, formationData);
-      return { message: "Announcement added" };
+      return { message: "Объявления успешно добавлены" };
     } catch (error) {
-      throw new NotFoundException("Ошибка при добавлении объявлений");
+      throw new BadRequestException("Ошибка при добавлении объявлений");
     }
   }
 
-  async createOne(req: Request) {
+  async createOne(
+    files: Express.Multer.File[],
+    createAnnouncementDto: CreateOneAnnouncementDto
+  ) {
     const {
       area,
       description,
@@ -77,7 +79,7 @@ export class AnnouncementService {
       geo_lat,
       geo_lon,
       userId,
-    } = req.body;
+    } = createAnnouncementDto;
 
     const limit = await this.checkBalanceRequestApiDaData();
 
@@ -87,15 +89,6 @@ export class AnnouncementService {
         HttpStatus.BAD_REQUEST
       );
     }
-
-    const encodeAddress = encodeURIComponent(address);
-    let coords: { lat: number; lon: number };
-    if (!geo_lat && !geo_lon) {
-      coords = await this.getCoordsByAddressService.getCoords(encodeAddress);
-    }
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const files: any = req.files;
 
     const photos = files.map((file) => file.filename);
 
@@ -122,8 +115,8 @@ export class AnnouncementService {
       highway_proximity: null,
       flat_land_level: null,
       phone: null,
-      lat: geo_lat ? geo_lat : coords.lat,
-      lon: geo_lon ? geo_lon : coords.lon,
+      lat: geo_lat,
+      lon: geo_lon,
       date_published,
       date_updated: null,
       owner_name: null,
@@ -133,7 +126,7 @@ export class AnnouncementService {
       regionKladrId,
       isChecked: false,
       user: {
-        id: Number(userId),
+        id: +userId,
       },
     };
 
@@ -296,6 +289,7 @@ export class AnnouncementService {
   async findOne(id: number) {
     const announcement = await this.connection.manager.findOne(Announcement, {
       where: { id },
+      relations: ["user"],
     });
 
     if (!announcement) {
@@ -313,23 +307,17 @@ export class AnnouncementService {
     id: number,
     updateAnnouncementDto: UpdateAnnouncementDto,
     isRemoveInitImages: string,
-    req: Request
+    files: Express.Multer.File[]
   ) {
-    const announcement = await this.connection.manager.findOne(Announcement, {
-      where: { id },
-      relations: ["user"],
-    });
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const files: any = req.files;
+    const announcement = await this.findOne(id);
 
     const newPhotos = files.map((file) => file.filename);
 
     const { area, removableFiles, address } = updateAnnouncementDto;
 
-    let coords: { lat: number; lon: number };
-    if (address) {
-      coords = await this.getCoordsByAddressService.getCoords(address);
+    let coords: ICoords;
+    if (announcement.address !== address) {
+      coords = await this.getCoordsByAddress(address);
     }
 
     let removableFilesArr: string[] | string = removableFiles;
@@ -382,15 +370,13 @@ export class AnnouncementService {
     const editAnnouncement = await this.connection.manager.save(
       Announcement,
       announcementOptions
-    ); // метод update не хочет работать, выдает ошибку, что не может найти сущность userId
+    );
 
     return editAnnouncement;
   }
 
   async remove(id: number) {
-    const announcement = await this.connection.manager.findOne(Announcement, {
-      where: { id },
-    });
+    const announcement = await this.findOne(id);
 
     if (announcement.domain === myAnnouncementDomain) {
       if (announcement.photos.length) {
@@ -552,10 +538,7 @@ export class AnnouncementService {
     return data;
   }
 
-  private async getRegionKladrId(announcementCoords: {
-    lat: number;
-    lon: number;
-  }) {
+  private async getRegionKladrId(announcementCoords: ICoords) {
     const url =
       "https://suggestions.dadata.ru/suggestions/api/4_1/rs/geolocate/address";
     const token = process.env.DADATA_API_KEY;
@@ -611,6 +594,38 @@ export class AnnouncementService {
       const limitSuggestions: number = resJson.remaining.suggestions;
 
       return limitSuggestions;
+    } catch (error) {
+      throw new HttpException("Произошла ошибка!", HttpStatus.BAD_REQUEST);
+    }
+  }
+
+  private async getCoordsByAddress(encodeAddress: string) {
+    const url = "https://cleaner.dadata.ru/api/v1/clean/address";
+    const token = process.env.DADATA_API_KEY;
+    const secret = process.env.DADATA_SECRET_KEY;
+    const query = encodeAddress;
+
+    const options = {
+      method: "POST",
+      mode: "cors" as RequestMode,
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Token " + token,
+        "X-Secret": secret,
+      },
+      body: JSON.stringify([query]),
+    };
+
+    try {
+      const res = await fetch(url, options);
+      const resJson = await res.json();
+
+      const addressCoords: ICoords = {
+        lat: resJson[0].geo_lat,
+        lon: resJson[0].geo_lon,
+      };
+
+      return addressCoords;
     } catch (error) {
       throw new HttpException("Произошла ошибка!", HttpStatus.BAD_REQUEST);
     }

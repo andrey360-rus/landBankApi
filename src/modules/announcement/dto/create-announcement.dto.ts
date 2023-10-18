@@ -3,7 +3,7 @@ import { IsArray, IsNumber, IsString } from "class-validator";
 
 export class CreateAnnouncementDto {
   @ApiProperty({
-    example: "1",
+    example: 1,
     description: "Уникальный идентификатор объявления",
   })
   @IsNumber({}, { message: "Должно быть числом" })
@@ -116,7 +116,10 @@ export class CreateAnnouncementDto {
   @ApiPropertyOptional()
   highway_proximity: boolean;
 
-  @ApiProperty()
+  @ApiProperty({
+    example: false,
+    description: "Права пользования",
+  })
   @ApiPropertyOptional()
   is_rent: boolean;
 
@@ -124,45 +127,63 @@ export class CreateAnnouncementDto {
   @ApiPropertyOptional()
   flat_land_level: boolean;
 
-  @ApiProperty()
+  @ApiProperty({
+    example: "79001234567",
+    description: "Номер телефона владельца объявления",
+  })
   @ApiPropertyOptional()
   @IsString({ message: "Должно быть строкой" })
   phone: string;
 
-  @ApiProperty()
+  @ApiProperty({
+    example: 55.676702,
+    description: "Координата широты",
+  })
   @IsNumber({}, { message: "Должно быть числом" })
   lat: number;
 
-  @ApiProperty()
+  @ApiProperty({ example: 37.763028, description: "Координата долготы" })
   @IsNumber({}, { message: "Должно быть числом" })
   lon: number;
 
-  @ApiProperty()
+  @ApiProperty({ description: "Дата публикации" })
   @ApiPropertyOptional()
   @IsString({ message: "Должно быть строкой" })
   date_published: string;
 
-  @ApiProperty()
+  @ApiProperty({ description: "Дата обновления" })
   @ApiPropertyOptional()
   @IsString({ message: "Должно быть строкой" })
   date_updated: string;
 
-  @ApiProperty()
+  @ApiProperty({
+    example: "Владислав Черкас",
+    description: "Владелец объявления",
+  })
   @ApiPropertyOptional()
   @IsString({ message: "Должно быть строкой" })
   owner_name: string;
 
-  @ApiProperty()
+  @ApiProperty({
+    example: "31:16:0123029:163",
+    description: "Кадастровый номер",
+  })
   @ApiPropertyOptional()
   @IsString({ message: "Должно быть строкой" })
   cadastral_number: string;
 
-  @ApiProperty()
+  @ApiProperty({
+    example: "cian.ru",
+    description: "Домен площадки, где размещено объявление",
+  })
   @ApiPropertyOptional()
   @IsString({ message: "Должно быть строкой" })
   domain: string;
 
-  @ApiProperty()
+  @ApiProperty({
+    example: "https://stavropol.cian.ru/sale/suburban/285629957/",
+    description: "Адрес источника объявления",
+  })
   @ApiPropertyOptional()
   @IsString({ message: "Должно быть строкой" })
   url: string;

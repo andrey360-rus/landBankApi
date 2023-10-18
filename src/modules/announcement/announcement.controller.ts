@@ -8,9 +8,8 @@ import {
   Delete,
   Query,
   UseGuards,
-  Req,
-  UploadedFile,
   UseInterceptors,
+  UploadedFiles,
 } from "@nestjs/common";
 import { AnnouncementService } from "./announcement.service";
 import { CreateAnnouncementDto } from "./dto/create-announcement.dto";
@@ -19,11 +18,11 @@ import {
   ApiBadRequestResponse,
   ApiBearerAuth,
   ApiBody,
+  ApiConsumes,
   ApiCreatedResponse,
   ApiForbiddenResponse,
   ApiOkResponse,
   ApiOperation,
-  ApiResponse,
   ApiTags,
 } from "@nestjs/swagger";
 import { Announcement } from "./entities/announcement.entity";
@@ -41,8 +40,9 @@ import {
 } from "./swagger/api-response/match-favorite-announcement.type";
 import { AddToFavoritiesAnnouncementsErrorResponse } from "./swagger/api-response/add-to-favorite-announcements.type";
 import { FilesInterceptor } from "@nestjs/platform-express";
-import { Request } from "express";
 import { storage } from "./announcement.consts";
+import { CreateAnnouncementsApiOkResponse } from "./swagger/api-response/create-announcements.type";
+import { CreateOneAnnouncementDto } from "./dto/create-one-announcement.dto";
 
 @Controller("announcements")
 @ApiTags("Объявления")
@@ -50,8 +50,27 @@ export class AnnouncementController {
   constructor(private readonly announcementService: AnnouncementService) {}
 
   @ApiOperation({ summary: "Создать объявления из парсера" })
-  @ApiResponse({ status: 201, type: Announcement })
-  @ApiBearerAuth()
+  @ApiCreatedResponse({
+    type: CreateAnnouncementsApiOkResponse,
+    description: "Объявления успешно добавлены",
+  })
+  @ApiBadRequestResponse({
+    description: "Недействительный запрос",
+  })
+  @ApiBody({ type: [CreateAnnouncementDto] })
+  @Post("add_v2")
+  create_v2(@Body() createAnnouncementDto: CreateAnnouncementDto[]) {
+    return this.announcementService.create_v2(createAnnouncementDto);
+  }
+
+  @ApiOperation({ summary: "Создать объявления из парсера" })
+  @ApiCreatedResponse({
+    type: CreateAnnouncementsApiOkResponse,
+    description: "Объявления успешно добавлены",
+  })
+  @ApiBadRequestResponse({
+    description: "Недействительный запрос",
+  })
   @ApiBody({ type: [CreateAnnouncementDto] })
   @Post("add")
   create(@Body() createAnnouncementDto: CreateAnnouncementDto[]) {
@@ -63,31 +82,34 @@ export class AnnouncementController {
     type: Announcement,
     description: "Объявление успешно создано",
   })
-  // @ApiBadRequestResponse({
-  //   description: "Пользователь или объявление не найдены",
-  //   type: AddToFavoritiesAnnouncementsErrorResponse,
-  // })
+  @ApiForbiddenResponse({
+    description: "Недостаточно прав",
+  })
   @ApiBearerAuth()
+  @ApiConsumes("multipart/form-data")
   @Roles("ADMIN", "ADS_EDITOR")
   @UseGuards(RolesGuard)
   @Post("add_one")
   @UseInterceptors(FilesInterceptor("photos", 10, storage))
   createOne(
-    @UploadedFile() photos: Array<Express.Multer.File>,
-    @Req() req: Request
+    @UploadedFiles() photos: Express.Multer.File[],
+    @Body() createAnnouncementDto: CreateOneAnnouncementDto
   ) {
-    return this.announcementService.createOne(req);
+    return this.announcementService.createOne(photos, createAnnouncementDto);
   }
 
   @ApiOperation({ summary: "Получить объявления" })
-  @ApiResponse({ status: 200, type: [Announcement] })
+  @ApiOkResponse({
+    type: [Announcement],
+    description: "Возвращает массив объявлений",
+  })
   @Get()
   findAll(@Query() queryParams: GetAnnouncementsDto) {
     return this.announcementService.findAll(queryParams);
   }
 
   @ApiOperation({ summary: "Получить кол-во объявлений" })
-  @ApiResponse({ status: 200 })
+  @ApiOkResponse({ description: "Возвращает общее количество объявлений" })
   @Get("count")
   getAnnouncementsCount() {
     return this.announcementService.getAnnouncementsCount();
@@ -101,6 +123,9 @@ export class AnnouncementController {
   @ApiBadRequestResponse({
     description: "Пользователь не найден",
     type: GetFavoritiesAnnouncements,
+  })
+  @ApiForbiddenResponse({
+    description: "Недостаточно прав",
   })
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
@@ -120,6 +145,9 @@ export class AnnouncementController {
     description: "Объявление не найдено",
     type: MatchFavoriteAnnouncementErrorResponse,
   })
+  @ApiForbiddenResponse({
+    description: "Недостаточно прав",
+  })
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   @Get("/favorities/match")
@@ -135,6 +163,9 @@ export class AnnouncementController {
   @ApiBadRequestResponse({
     description: "Пользователь или объявление не найдены",
     type: AddToFavoritiesAnnouncementsErrorResponse,
+  })
+  @ApiForbiddenResponse({
+    description: "Недостаточно прав",
   })
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
@@ -154,6 +185,9 @@ export class AnnouncementController {
     description: "Пользователь или объявление не найдены",
     type: AddToFavoritiesAnnouncementsErrorResponse,
   })
+  @ApiForbiddenResponse({
+    description: "Недостаточно прав",
+  })
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   @Delete("/favorities/remove")
@@ -166,7 +200,10 @@ export class AnnouncementController {
   }
 
   @ApiOperation({ summary: "Получить объявление по id" })
-  @ApiResponse({ status: 200, type: Announcement })
+  @ApiOkResponse({
+    type: Announcement,
+    description: "Возвращает объявление по его идентификатору",
+  })
   @Get(":id")
   findOne(@Param("id") id: string) {
     return this.announcementService.findOne(+id);
@@ -177,22 +214,25 @@ export class AnnouncementController {
     type: Announcement,
     description: "Объявление успешно обновлено",
   })
+  @ApiForbiddenResponse({
+    description: "Недостаточно прав",
+  })
+  @ApiConsumes("multipart/form-data")
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   @Patch(":id")
   @UseInterceptors(FilesInterceptor("photos", 10, storage))
   update(
-    @UploadedFile() photos: Array<Express.Multer.File>,
-    @Param("id") id: string,
+    @UploadedFiles() photos: Express.Multer.File[],
+    @Param("id") id: number,
     @Body() updateAnnouncementDto: UpdateAnnouncementDto,
-    @Query() isRemoveInitImages: string,
-    @Req() req: Request
+    @Query() isRemoveInitImages: string
   ) {
     return this.announcementService.update(
-      +id,
+      id,
       updateAnnouncementDto,
       isRemoveInitImages,
-      req
+      photos
     );
   }
 
@@ -200,6 +240,9 @@ export class AnnouncementController {
   @ApiOkResponse({
     type: Announcement,
     description: "Объявление успешно удалено",
+  })
+  @ApiForbiddenResponse({
+    description: "Недостаточно прав",
   })
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)

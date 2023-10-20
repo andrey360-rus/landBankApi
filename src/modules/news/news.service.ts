@@ -6,6 +6,7 @@ import { UpdateNewsDto } from "./dto/update-news.dto";
 import { News } from "./entities/news.entity";
 import { NewsSections } from "./news.enum";
 import { deleteStaticFiles } from "src/utils/deleteStaticFiles";
+import { FindAllNewsDto } from "./dto/find-all-news.dto";
 
 @Injectable()
 export class NewsService {
@@ -14,9 +15,9 @@ export class NewsService {
     private readonly connection: Connection
   ) {}
 
-  async create(newsDto: CreateNewsDto, article: Express.Multer.File) {
+  async create(createNewsDto: CreateNewsDto, article: Express.Multer.File) {
     const newsOptions = {
-      ...newsDto,
+      ...createNewsDto,
       article: article.filename,
     };
     const news = await this.connection.manager.save(News, newsOptions);
@@ -24,13 +25,18 @@ export class NewsService {
     return news;
   }
 
-  async findAll(section: string | undefined) {
+  async findAll(findAllNewsDto: FindAllNewsDto) {
+    const { section } = findAllNewsDto;
+
     const [listNews, totalCount] = await this.connection.manager.findAndCount(
       News,
       {
         order: { id: "DESC" },
         where: {
-          ...(section && { section: NewsSections[NewsSections[section]] }),
+          ...(section && {
+            section:
+              NewsSections[section.toUpperCase() as keyof typeof NewsSections],
+          }),
         },
       }
     );
@@ -55,7 +61,7 @@ export class NewsService {
 
   async update(
     newsId: number,
-    newsDto: UpdateNewsDto,
+    updateNewsDto: UpdateNewsDto,
     article: Express.Multer.File
   ) {
     const news = await this.findOne(newsId);
@@ -64,7 +70,7 @@ export class NewsService {
 
     const newsOption = {
       ...news,
-      ...newsDto,
+      ...updateNewsDto,
       article: article.filename,
     };
 

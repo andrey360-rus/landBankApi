@@ -6,6 +6,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   UploadedFile,
   UseGuards,
   UseInterceptors,
@@ -19,6 +20,7 @@ import {
   ApiOkResponse,
   ApiOperation,
   ApiParam,
+  ApiQuery,
   ApiResponse,
   ApiTags,
 } from "@nestjs/swagger";
@@ -30,6 +32,7 @@ import { UpdateNewsDto } from "./dto/update-news.dto";
 import { FileInterceptor } from "@nestjs/platform-express";
 import { storage } from "./news.constant";
 import { GetNewsById } from "./swagger/api-response/get-news-by-id.type";
+import { FindAllNewsDto } from "./dto/find-all-news.dto";
 
 @Controller("news")
 @ApiTags("Новости")
@@ -51,22 +54,22 @@ export class NewsController {
   @UseInterceptors(FileInterceptor("article", storage))
   create(
     @UploadedFile() article: Express.Multer.File,
-    @Body() news: CreateNewsDto
+    @Body() createNewsDto: CreateNewsDto
   ) {
-    return this.newsService.create(news, article);
+    return this.newsService.create(createNewsDto, article);
   }
 
   @ApiOperation({ summary: "Получить новости" })
   @ApiOkResponse({ type: [News], description: "Возвращает массив новостей" })
-  @ApiParam({
+  @ApiQuery({
     name: "section",
     required: false,
     description: "Раздел новости",
     example: "analytics",
   })
   @Get()
-  findAll(@Param() section: string | undefined) {
-    return this.newsService.findAll(section);
+  findAll(@Query() findAllNewsDto: FindAllNewsDto) {
+    return this.newsService.findAll(findAllNewsDto);
   }
 
   @ApiOperation({ summary: "Получить новость по id" })
@@ -107,9 +110,9 @@ export class NewsController {
   update(
     @UploadedFile() article: Express.Multer.File,
     @Param("id") id: number,
-    @Body() newsDto: UpdateNewsDto
+    @Body() updateNewsDto: UpdateNewsDto
   ) {
-    return this.newsService.update(id, newsDto, article);
+    return this.newsService.update(id, updateNewsDto, article);
   }
 
   @ApiOperation({ summary: "Удалить новость" })

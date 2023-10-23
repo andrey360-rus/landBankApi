@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import {
   BadRequestException,
   HttpException,
@@ -75,10 +76,15 @@ export class AnnouncementService {
       price,
       title,
       address,
-      regionKladrId,
+      region_kladr_id,
       geo_lat,
       geo_lon,
       userId,
+      rentPeriod,
+      type_of_use,
+      irrigation,
+      survey,
+      cultivated_crop,
     } = createAnnouncementDto;
 
     const limit = await this.checkBalanceRequestApiDaData();
@@ -93,6 +99,11 @@ export class AnnouncementService {
     const photos = files.map((file) => file.filename);
 
     const date_published = new Date().toISOString();
+
+    let dateRentPeriod: Date | undefined;
+    if (rentPeriod) {
+      dateRentPeriod = this.datesService.parseDate(rentPeriod);
+    }
 
     const announcementOptions = {
       description,
@@ -123,8 +134,13 @@ export class AnnouncementService {
       cadastral_number: null,
       domain: myAnnouncementDomain,
       url: null,
-      regionKladrId,
-      isChecked: false,
+      region_kladr_id,
+      is_checked: false,
+      type_of_use,
+      cultivated_crop,
+      irrigation: irrigation === "false" ? false : true,
+      survey: survey === "false" ? false : true,
+      rent_period: rentPeriod ? dateRentPeriod : null,
       user: {
         id: +userId,
       },
@@ -313,11 +329,26 @@ export class AnnouncementService {
 
     const newPhotos = files.map((file) => file.filename);
 
-    const { area, removableFiles, address } = updateAnnouncementDto;
+    const {
+      area,
+      removableFiles,
+      address,
+      rentPeriod,
+      irrigation,
+      survey,
+      type_of_use,
+      cultivated_crop,
+    } = updateAnnouncementDto;
+
+    let dateRentPeriod: Date | undefined;
 
     let coords: ICoords;
     if (announcement.address !== address) {
       coords = await this.getCoordsByAddress(address);
+    }
+
+    if (rentPeriod) {
+      dateRentPeriod = this.datesService.parseDate(rentPeriod);
     }
 
     let removableFilesArr: string[] | string = removableFiles;
@@ -367,6 +398,10 @@ export class AnnouncementService {
       date_updated,
       photos: newAnnouncementPhotos,
       ...(coords && { lat: coords.lat, lon: coords.lon }),
+      irrigation: irrigation === "false" ? false : true,
+      survey: survey === "false" ? false : true,
+      rent_period: rentPeriod ? dateRentPeriod : null,
+      cultivated_crop: type_of_use === "arable" ? cultivated_crop : null,
     };
 
     const editAnnouncement = await this.connection.manager.save(
@@ -398,7 +433,7 @@ export class AnnouncementService {
 
     const announcement = await this.findOne(id);
 
-    announcement.isChecked = isChecked;
+    announcement.is_checked = isChecked;
     await this.connection.manager.save(Announcement, data);
     return { id, isChecked };
   }
@@ -536,7 +571,7 @@ export class AnnouncementService {
         lon: announcement.lon,
       });
 
-      announcement.regionKladrId = regionKladrId || null;
+      announcement.region_kladr_id = regionKladrId;
     }
 
     return data;
@@ -564,7 +599,7 @@ export class AnnouncementService {
       const resJson = await res.json();
 
       if (!resJson.suggestions.length) {
-        return undefined;
+        return null;
       }
 
       const regionKladrId: string =

@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import { IsArray, IsNumber, IsString } from "class-validator";
+import { IsArray, IsBoolean, IsNumber, IsString } from "class-validator";
 
 export class CreateAnnouncementDto {
   @ApiProperty({
@@ -90,30 +90,37 @@ export class CreateAnnouncementDto {
 
   @ApiProperty()
   @ApiPropertyOptional()
+  @IsBoolean({ message: "Должно быть булевым значением" })
   railway_line: boolean;
 
   @ApiProperty()
   @ApiPropertyOptional()
+  @IsBoolean({ message: "Должно быть булевым значением" })
   asphalt_pavement: boolean;
 
   @ApiProperty()
   @ApiPropertyOptional()
+  @IsBoolean({ message: "Должно быть булевым значением" })
   electricity: boolean;
 
   @ApiProperty()
   @ApiPropertyOptional()
+  @IsBoolean({ message: "Должно быть булевым значением" })
   gas: boolean;
 
   @ApiProperty()
   @ApiPropertyOptional()
+  @IsBoolean({ message: "Должно быть булевым значением" })
   water_supply: boolean;
 
   @ApiProperty()
   @ApiPropertyOptional()
+  @IsBoolean({ message: "Должно быть булевым значением" })
   sewage: boolean;
 
   @ApiProperty()
   @ApiPropertyOptional()
+  @IsBoolean({ message: "Должно быть булевым значением" })
   highway_proximity: boolean;
 
   @ApiProperty({
@@ -121,10 +128,12 @@ export class CreateAnnouncementDto {
     description: "Права пользования",
   })
   @ApiPropertyOptional()
+  @IsBoolean({ message: "Должно быть булевым значением" })
   is_rent: boolean;
 
   @ApiProperty()
   @ApiPropertyOptional()
+  @IsBoolean({ message: "Должно быть булевым значением" })
   flat_land_level: boolean;
 
   @ApiProperty({
@@ -189,15 +198,9 @@ export class CreateAnnouncementDto {
   url: string;
 
   @ApiProperty({
-    example: false,
-    description: "Флаг проверки объявления",
-  })
-  @ApiPropertyOptional()
-  isChecked: boolean;
-
-  @ApiProperty({
     example: "7700000000000",
     description: "КЛАДР-код региона",
   })
-  regionKladrId: string;
+  @IsString({ message: "Должно быть строкой" })
+  region_kladr_id: string;
 }

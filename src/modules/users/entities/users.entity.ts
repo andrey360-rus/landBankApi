@@ -38,6 +38,14 @@ export class User {
   @ManyToMany(() => Role, (role) => role.users)
   @JoinTable({
     name: "user_roles",
+    joinColumn: {
+      name: "user_id",
+      referencedColumnName: "id",
+    },
+    inverseJoinColumn: {
+      name: "roles_id",
+      referencedColumnName: "id",
+    },
   })
   roles: Role[];
 
@@ -62,6 +70,14 @@ export class User {
   @ManyToMany(() => Announcement, (announcement) => announcement.users)
   @JoinTable({
     name: "favorite_announcements",
+    joinColumn: {
+      name: "user_id",
+      referencedColumnName: "id",
+    },
+    inverseJoinColumn: {
+      name: "announcement_id",
+      referencedColumnName: "id",
+    },
   })
   favoritiesAnnouncements: Announcement[];
 

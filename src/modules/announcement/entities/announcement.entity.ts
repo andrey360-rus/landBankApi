@@ -2,6 +2,7 @@ import {
   Column,
   Entity,
   Index,
+  JoinColumn,
   ManyToMany,
   ManyToOne,
   OneToMany,
@@ -20,7 +21,7 @@ import { Note } from "src/modules/notes/entities/notes.entity";
   "land_use",
   "is_rent",
   "date_published",
-  "regionKladrId",
+  "region_kladr_id",
 ])
 export class Announcement {
   @ApiProperty({
@@ -143,6 +144,10 @@ export class Announcement {
   @Column("boolean")
   is_rent: boolean;
 
+  @ApiProperty({ description: "Срок договора аренды" })
+  @Column("timestamp", { nullable: true })
+  rent_period: Date;
+
   @ApiProperty()
   @Column("boolean", { nullable: true })
   flat_land_level: boolean;
@@ -206,14 +211,42 @@ export class Announcement {
     description: "Флаг проверки объявления",
   })
   @Column("boolean", { nullable: true })
-  isChecked: boolean;
+  is_checked: boolean;
 
   @ApiProperty({
     example: "7700000000000",
     description: "КЛАДР-код региона",
   })
   @Column("text", { nullable: true })
-  regionKladrId: string;
+  region_kladr_id: string;
+
+  @ApiProperty({
+    example: "arable",
+    description: "Вид использования",
+  })
+  @Column("text", { nullable: true })
+  type_of_use: string;
+
+  @ApiProperty({
+    example: "arable",
+    description: "Выращиваемая культура",
+  })
+  @Column("text", { nullable: true })
+  cultivated_crop: string;
+
+  @ApiProperty({
+    example: false,
+    description: "Орошение",
+  })
+  @Column("boolean", { nullable: true })
+  irrigation: boolean;
+
+  @ApiProperty({
+    example: false,
+    description: "Межевание",
+  })
+  @Column("boolean", { nullable: true })
+  survey: boolean;
 
   @ManyToMany(() => User, (user) => user.favoritiesAnnouncements, {
     onDelete: "CASCADE",
@@ -225,6 +258,7 @@ export class Announcement {
     onDelete: "CASCADE",
     onUpdate: "CASCADE",
   })
+  @JoinColumn({ name: "user_id" })
   user: User;
 
   @OneToMany(() => Note, (note) => note.announcement)

@@ -1,8 +1,11 @@
 import { PartialType } from "@nestjs/mapped-types";
-import { CreateAnnouncementDto } from "./create-announcement.dto";
-import { ApiProperty } from "@nestjs/swagger";
 
-export class UpdateAnnouncementDto extends PartialType(CreateAnnouncementDto) {
+import { ApiProperty } from "@nestjs/swagger";
+import { CreateOneAnnouncementDto } from "./create-one-announcement.dto";
+
+export class UpdateAnnouncementDto extends PartialType(
+  CreateOneAnnouncementDto
+) {
   @ApiProperty({
     type: "array",
     items: {

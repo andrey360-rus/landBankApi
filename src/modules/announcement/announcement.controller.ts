@@ -49,6 +49,17 @@ import { CreateOneAnnouncementDto } from "./dto/create-one-announcement.dto";
 export class AnnouncementController {
   constructor(private readonly announcementService: AnnouncementService) {}
 
+  @Post("set_data")
+  setRegionKladrIdAndDate(
+    @Body() dadataApiKeys: string[],
+    @Query() queryParams: { count: number }
+  ) {
+    return this.announcementService.setRegionKladrIdAndDate(
+      dadataApiKeys,
+      queryParams
+    );
+  }
+
   @ApiOperation({ summary: "Создать объявления из парсера" })
   @ApiCreatedResponse({
     type: CreateAnnouncementsApiOkResponse,

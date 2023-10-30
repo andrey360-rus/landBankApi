@@ -14,13 +14,15 @@ import { User } from "../users/entities/users.entity";
 import { ForgotPasswordDto } from "./dto/forgot-password.dto";
 import { MailerService } from "@nestjs-modules/mailer";
 import { ChangePasswordDto } from "./dto/change-password.dto";
-import { InjectConnection } from "@nestjs/typeorm";
-import { Connection } from "typeorm";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
 
 @Injectable()
 export class AuthService {
   constructor(
-    @InjectConnection() private readonly connection: Connection,
+    @InjectRepository(User)
+    private usersRepository: Repository<User>,
+
     private userService: UsersService,
     private jwtService: JwtService,
     private readonly mailerService: MailerService
@@ -111,7 +113,7 @@ export class AuthService {
         subject: "Восстановление пароля",
         html: `
           <h3>Приветствуем!</h3>
-          <p>Пожалуйста, используйте данную <a href="${forgotLink}">cсылку</a> для сброса пароля.</p>
+          <p>Пожалуйста, используйте данную <a href="${forgotLink}" target='_blank'>cсылку</a> для сброса пароля.</p>
         `,
       })
       .catch(() => {
@@ -141,7 +143,7 @@ export class AuthService {
 
     const hashPass = await bcrypt.hash(password, 5);
 
-    await this.connection.manager.save(User, { ...user, password: hashPass });
+    await this.usersRepository.save({ ...user, password: hashPass });
 
     return true;
   }

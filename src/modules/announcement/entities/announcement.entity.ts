@@ -1,4 +1,5 @@
 import {
+  AfterUpdate,
   Column,
   Entity,
   Index,
@@ -263,4 +264,9 @@ export class Announcement {
 
   @OneToMany(() => Note, (note) => note.announcement)
   notes: Note[];
+
+  @AfterUpdate()
+  resetChecked() {
+    this.is_checked = false;
+  }
 }

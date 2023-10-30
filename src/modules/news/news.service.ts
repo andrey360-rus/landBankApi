@@ -1,6 +1,6 @@
 import { HttpException, HttpStatus, Injectable } from "@nestjs/common";
-import { InjectConnection } from "@nestjs/typeorm";
-import { Connection } from "typeorm";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
 import { CreateNewsDto } from "./dto/create-news.dto";
 import { UpdateNewsDto } from "./dto/update-news.dto";
 import { News } from "./entities/news.entity";
@@ -11,8 +11,8 @@ import { FindAllNewsDto } from "./dto/find-all-news.dto";
 @Injectable()
 export class NewsService {
   constructor(
-    @InjectConnection()
-    private readonly connection: Connection
+    @InjectRepository(News)
+    private newsRepository: Repository<News>
   ) {}
 
   async create(createNewsDto: CreateNewsDto, article: Express.Multer.File) {
@@ -20,7 +20,7 @@ export class NewsService {
       ...createNewsDto,
       article: article.filename,
     };
-    const news = await this.connection.manager.save(News, newsOptions);
+    const news = await this.newsRepository.save(newsOptions);
 
     return news;
   }
@@ -28,24 +28,21 @@ export class NewsService {
   async findAll(findAllNewsDto: FindAllNewsDto) {
     const { section } = findAllNewsDto;
 
-    const [listNews, totalCount] = await this.connection.manager.findAndCount(
-      News,
-      {
-        order: { id: "DESC" },
-        where: {
-          ...(section && {
-            section:
-              NewsSections[section.toUpperCase() as keyof typeof NewsSections],
-          }),
-        },
-      }
-    );
+    const [listNews, totalCount] = await this.newsRepository.findAndCount({
+      order: { id: "DESC" },
+      where: {
+        ...(section && {
+          section:
+            NewsSections[section.toUpperCase() as keyof typeof NewsSections],
+        }),
+      },
+    });
 
     return { listNews, totalCount };
   }
 
   async findOne(newsId: number) {
-    const news = await this.connection.manager.findOne(News, {
+    const news = await this.newsRepository.findOne({
       where: { id: newsId },
     });
 
@@ -74,7 +71,7 @@ export class NewsService {
       article: article.filename,
     };
 
-    const updateNews = await this.connection.manager.save(News, newsOption);
+    const updateNews = await this.newsRepository.save(newsOption);
 
     return updateNews;
   }
@@ -84,7 +81,7 @@ export class NewsService {
 
     deleteStaticFiles("articles", news.article);
 
-    await this.connection.manager.delete(News, { id: newsId });
+    await this.newsRepository.delete({ id: newsId });
     return { id: newsId };
   }
 }

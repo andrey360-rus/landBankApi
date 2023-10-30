@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import {
   BadRequestException,
   HttpException,
@@ -7,9 +6,8 @@ import {
 } from "@nestjs/common";
 import { CreateAnnouncementDto } from "./dto/create-announcement.dto";
 import { UpdateAnnouncementDto } from "./dto/update-announcement.dto";
-import { InjectConnection } from "@nestjs/typeorm";
-import { Between, ILike, In, MoreThanOrEqual } from "typeorm";
-import { Connection } from "typeorm";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Between, ILike, In, MoreThanOrEqual, Repository } from "typeorm";
 import { Announcement } from "./entities/announcement.entity";
 import { GetAnnouncementsDto } from "./dto/get-announcements.dto";
 import { ToggleCheckedAnnouncementDto } from "./dto/toggle-checked-announcement.dto";
@@ -26,8 +24,10 @@ import { ICoords } from "./interfaces/announcement.interface";
 @Injectable()
 export class AnnouncementService {
   constructor(
-    @InjectConnection()
-    private readonly connection: Connection,
+    @InjectRepository(Announcement)
+    private announcementsRepository: Repository<Announcement>,
+    @InjectRepository(User)
+    private usersRepository: Repository<User>,
     private readonly datesService: DatesService,
     private readonly userService: UsersService
   ) {}
@@ -35,7 +35,7 @@ export class AnnouncementService {
   async create_v2(data: Array<CreateAnnouncementDto>) {
     try {
       this.dateGeneration(data);
-      await this.connection.manager.save(Announcement, data);
+      await this.announcementsRepository.save(data);
       return { message: "Объявления успешно добавлены" };
     } catch (error) {
       throw new BadRequestException("Ошибка при добавлении объявлений");
@@ -56,7 +56,7 @@ export class AnnouncementService {
       this.dateGeneration(data);
       const formationData = await this.regionKladrIdGeneration(data);
 
-      await this.connection.manager.save(Announcement, formationData);
+      await this.announcementsRepository.save(formationData);
       return { message: "Объявления успешно добавлены" };
     } catch (error) {
       throw new BadRequestException("Ошибка при добавлении объявлений");
@@ -146,8 +146,7 @@ export class AnnouncementService {
       },
     };
 
-    const announcement = await this.connection.manager.save(
-      Announcement,
+    const announcement = await this.announcementsRepository.save(
       announcementOptions
     );
 
@@ -235,7 +234,7 @@ export class AnnouncementService {
     }
 
     const [listAnnouncement, totalCount] =
-      await this.connection.manager.findAndCount(Announcement, {
+      await this.announcementsRepository.findAndCount({
         ...(isMapMethod && {
           select: {
             id: true,
@@ -303,7 +302,7 @@ export class AnnouncementService {
   }
 
   async findOne(id: number) {
-    const announcement = await this.connection.manager.findOne(Announcement, {
+    const announcement = await this.announcementsRepository.findOneOrFail({
       where: { id },
       relations: ["user"],
     });
@@ -391,7 +390,9 @@ export class AnnouncementService {
 
     const date_updated = new Date().toISOString().slice(0, 10);
 
-    const announcementOptions = {
+    announcement.resetChecked();
+
+    const announcementOptions = this.announcementsRepository.create({
       ...announcement,
       ...updateAnnouncementDto,
       area: newArea,
@@ -402,16 +403,14 @@ export class AnnouncementService {
       survey: survey === "false" ? false : true,
       rent_period: rentPeriod ? dateRentPeriod : null,
       cultivated_crop: type_of_use === "arable" ? cultivated_crop : null,
-    };
+    });
 
-    const editAnnouncement = await this.connection.manager.save(
-      Announcement,
+    const editAnnouncement = await this.announcementsRepository.save(
       announcementOptions
     );
 
     return editAnnouncement;
   }
-
   async remove(id: number) {
     const announcement = await this.findOne(id);
 
@@ -423,7 +422,7 @@ export class AnnouncementService {
       }
     }
 
-    await this.connection.manager.delete(Announcement, { id });
+    await this.announcementsRepository.delete({ id });
 
     return announcement;
   }
@@ -431,15 +430,15 @@ export class AnnouncementService {
   async toggleChecked(data: ToggleCheckedAnnouncementDto) {
     const { id, isChecked } = data;
 
-    const announcement = await this.findOne(id);
-
-    announcement.is_checked = isChecked;
-    await this.connection.manager.save(Announcement, data);
+    await this.announcementsRepository.update(
+      { id },
+      { is_checked: isChecked }
+    );
     return { id, isChecked };
   }
 
   async getAnnouncementsCount() {
-    const count = await this.connection.manager.count(Announcement);
+    const count = await this.announcementsRepository.count();
 
     return { count };
   }
@@ -499,7 +498,7 @@ export class AnnouncementService {
         favoritiesAnnouncements: newFavoritiesAnnouncements,
       };
 
-      await this.connection.manager.save(User, userWithNewFavoriteAnnouncement);
+      await this.usersRepository.save(userWithNewFavoriteAnnouncement);
 
       return data;
     }
@@ -528,10 +527,7 @@ export class AnnouncementService {
         announcement: filteredAnnouncements,
       };
 
-      await this.connection.manager.save(
-        User,
-        userWithRemovedFavoriteAnnouncement
-      );
+      await this.usersRepository.save(userWithRemovedFavoriteAnnouncement);
 
       return data;
     }

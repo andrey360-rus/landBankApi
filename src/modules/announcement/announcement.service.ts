@@ -255,7 +255,7 @@ export class AnnouncementService {
           ...(land_use && { land_use: In(landUseArr) }),
           ...(land_category && { land_category: In(landCategoryArr) }),
           ...(address && {
-            regionKladrId: In(addressArr),
+            region_kladr_id: In(addressArr),
           }),
           ...(keyword && {
             description: ILike(`%${decodeURIComponent(keyword)}%`),

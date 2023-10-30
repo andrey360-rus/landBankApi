@@ -52,7 +52,7 @@ export class AnnouncementController {
   @Post("set_data")
   setRegionKladrIdAndDate(
     @Body() dadataApiKeys: string[],
-    @Query() queryParams: { count: number }
+    @Query() queryParams: { count: string }
   ) {
     return this.announcementService.setRegionKladrIdAndDate(
       dadataApiKeys,

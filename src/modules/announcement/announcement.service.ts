@@ -546,23 +546,28 @@ export class AnnouncementService {
   }
 
   private dateGeneration(data: CreateAnnouncementDto[] | Announcement[]) {
-    data.forEach((announcement) => {
-      const { date_published, date_updated } = announcement;
-      if (date_published && date_updated && date_published !== "NULL") {
-        const dateArr = [date_published, date_updated];
+    data.forEach(
+      (announcement: {
+        date_published: string | Date;
+        date_updated: string | Date;
+      }) => {
+        const { date_published, date_updated } = announcement;
+        if (date_published && date_updated && date_published !== "NULL") {
+          const dateArr = [date_published, date_updated];
 
-        const newDateArr = dateArr.map((date) => {
-          const parseDate = this.datesService.parseDate(date);
+          const newDateArr = dateArr.map((date) => {
+            const parseDate = this.datesService.parseDate(date as string);
 
-          const generatedDate = this.datesService.formateDate(parseDate);
+            const generatedDate = this.datesService.formateDate(parseDate);
 
-          return generatedDate;
-        });
+            return generatedDate;
+          });
 
-        announcement.date_published = newDateArr[0];
-        announcement.date_updated = newDateArr[1];
+          announcement.date_published = newDateArr[0];
+          announcement.date_updated = newDateArr[1];
+        }
       }
-    });
+    );
 
     return data;
   }
@@ -680,7 +685,7 @@ export class AnnouncementService {
 
   async setRegionKladrIdAndDate(
     dadataApiKeys: string[],
-    queryParams: { count: number }
+    queryParams: { count: string }
   ) {
     const limit = 1000;
     const apiRequestsLimit = 10_000;
@@ -704,8 +709,6 @@ export class AnnouncementService {
           breakFor = true;
           break;
         }
-
-        this.dateGeneration(announcements) as Announcement[];
 
         const formationData = (await this.regionKladrIdGeneration(
           announcements,

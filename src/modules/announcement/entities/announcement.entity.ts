@@ -1,5 +1,5 @@
 import {
-  AfterUpdate,
+  BeforeUpdate,
   Column,
   Entity,
   Index,
@@ -214,6 +214,10 @@ export class Announcement {
   @Column("boolean", { nullable: true })
   is_checked: boolean;
 
+  @ApiProperty({ description: "Дата проверки" })
+  @Column("timestamp", { nullable: true })
+  date_checked: Date;
+
   @ApiProperty({
     example: "7700000000000",
     description: "КЛАДР-код региона",
@@ -265,8 +269,9 @@ export class Announcement {
   @OneToMany(() => Note, (note) => note.announcement)
   notes: Note[];
 
-  @AfterUpdate()
+  @BeforeUpdate()
   resetChecked() {
     this.is_checked = false;
+    this.date_checked = null;
   }
 }

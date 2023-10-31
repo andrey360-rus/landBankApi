@@ -390,8 +390,6 @@ export class AnnouncementService {
 
     const date_updated = new Date().toISOString().slice(0, 10);
 
-    announcement.resetChecked();
-
     const announcementOptions = this.announcementsRepository.create({
       ...announcement,
       ...updateAnnouncementDto,
@@ -430,9 +428,17 @@ export class AnnouncementService {
   async toggleChecked(data: ToggleCheckedAnnouncementDto) {
     const { id, isChecked } = data;
 
+    let date_checked: Date | null;
+
+    if (isChecked) {
+      date_checked = new Date();
+    } else {
+      date_checked = null;
+    }
+
     await this.announcementsRepository.update(
       { id },
-      { is_checked: isChecked }
+      { is_checked: isChecked, date_checked }
     );
     return { id, isChecked };
   }

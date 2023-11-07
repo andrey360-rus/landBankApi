@@ -203,4 +203,11 @@ export class CreateAnnouncementDto {
   })
   @IsString({ message: "Должно быть строкой" })
   region_kladr_id: string;
+
+  @ApiProperty({
+    example: "1000000",
+    description: "Цена за единицу площади",
+  })
+  @IsNumber({}, { message: "Должно быть числом" })
+  unit_price: number;
 }

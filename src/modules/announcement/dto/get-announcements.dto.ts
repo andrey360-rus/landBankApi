@@ -77,4 +77,11 @@ export class GetAnnouncementsDto {
 
   @ApiProperty()
   geoBounds?: string;
+
+  @ApiProperty({
+    example: "true",
+    default: undefined,
+    description: "Измерение цены",
+  })
+  unitPrice?: string;
 }

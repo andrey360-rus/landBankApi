@@ -48,6 +48,7 @@ export class NewsController {
   @ApiBearerAuth()
   @ApiConsumes("multipart/form-data")
   @ApiBody({ type: CreateNewsDto })
+  @ApiConsumes("multipart/form-data")
   @Roles("ADMIN", "ADS_EDITOR")
   @UseGuards(RolesGuard)
   @Post("create")
@@ -103,6 +104,7 @@ export class NewsController {
     description: "Уникальный идентификатор новости",
     example: 1,
   })
+  @ApiConsumes("multipart/form-data")
   @Roles("ADMIN", "ADS_EDITOR")
   @UseGuards(RolesGuard)
   @Patch(":id")

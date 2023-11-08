@@ -5,11 +5,14 @@ import { UsersModule } from "./modules/users/users.module";
 import { RolesModule } from "./modules/roles/roles.module";
 import { AuthModule } from "./modules/auth/auth.module";
 import { NotesModule } from "./modules/notes/notes.module";
+import { NewsModule } from "./modules/news/news.module";
+import { TasksModule } from "./modules/tasks/tasks.module";
 import { ServeStaticModule } from "@nestjs/serve-static";
 import { join } from "path";
 import { MailerModule } from "@nestjs-modules/mailer";
 import { ConfigModule } from "@nestjs/config";
-import { NewsModule } from "./modules/news/news.module";
+
+import { ScheduleModule } from "@nestjs/schedule";
 
 @Module({
   imports: [
@@ -20,6 +23,7 @@ import { NewsModule } from "./modules/news/news.module";
     AuthModule,
     NotesModule,
     NewsModule,
+    TasksModule,
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, "..", "src", "static", "uploads"),
       serveRoot: "/images",
@@ -40,6 +44,7 @@ import { NewsModule } from "./modules/news/news.module";
         },
       },
     }),
+    ScheduleModule.forRoot(),
     ConfigModule.forRoot(),
   ],
 })

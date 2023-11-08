@@ -1,81 +1,154 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import { IsInt } from "class-validator";
+import {
+  AnnouncementShowMethodEnum,
+  AnnouncementStatusesEnum,
+  AreaUnitEnum,
+} from "../announcement.enum";
 
 export class GetAnnouncementsDto {
-  @ApiProperty({ default: 1 })
+  @ApiProperty({
+    example: 5,
+    default: 1,
+    description: "Номер страницы с объявлениями",
+  })
   @ApiPropertyOptional()
-  @IsInt()
   page?: number;
 
-  @ApiProperty({ default: 100 })
+  @ApiProperty({
+    example: 100,
+    default: 100,
+    description: "Лимит объявлений",
+  })
   @ApiPropertyOptional()
-  @IsInt()
   limit?: number;
 
-  @ApiProperty({ default: 100000000 })
+  @ApiProperty({
+    example: 10_000_000,
+    default: Infinity,
+    description: 'Цена "до"',
+  })
   @ApiPropertyOptional()
   price_to?: number;
 
-  @ApiProperty({ default: 1 })
+  @ApiProperty({ example: 100000, default: 1, description: 'Цена "от"' })
   @ApiPropertyOptional()
   price_from?: number;
 
-  @ApiProperty({ default: 10000000 })
+  @ApiProperty({ example: 10, default: Infinity, description: 'Площадь "до"' })
   @ApiPropertyOptional()
   area_to?: number;
 
-  @ApiProperty({ default: 1 })
+  @ApiProperty({ example: 2, default: 1, description: 'Площадь "от"' })
   @ApiPropertyOptional()
   area_from?: number;
 
-  @ApiProperty()
+  @ApiProperty({
+    example: "avito.ru",
+    default: undefined,
+    description: "Домен площадки источника объявления",
+  })
   @ApiPropertyOptional()
   domain?: string;
 
-  @ApiProperty()
+  @ApiProperty({
+    type: "array",
+    items: {
+      type: "string",
+      example: "7700000000000",
+    },
+    description: "Массив КЛАДР-код регионов",
+    nullable: true,
+    default: undefined,
+  })
   @ApiPropertyOptional()
   address?: string;
 
-  @ApiProperty()
+  @ApiProperty({
+    enum: AreaUnitEnum,
+    default: AreaUnitEnum.HECTARES,
+    description: "Едицины измерения площади",
+  })
   @ApiPropertyOptional()
   areaUnit?: string;
 
-  @ApiProperty()
+  @ApiProperty({
+    example: true,
+    default: false,
+    description: "Право собственности",
+  })
   @ApiPropertyOptional()
   is_rent: boolean;
 
-  @ApiProperty()
+  @ApiProperty({
+    example: "фундамент",
+    default: undefined,
+    description: "Слово в описании",
+  })
   @ApiPropertyOptional()
   keyword?: string;
 
-  @ApiProperty()
+  @ApiProperty({
+    example: "7",
+    default: undefined,
+    description: "Период публикации",
+  })
   @ApiPropertyOptional()
   date_range?: string;
 
-  @ApiProperty()
+  @ApiProperty({
+    example: "izhs",
+    default: undefined,
+    description: "Землепользование",
+  })
   @ApiPropertyOptional()
   land_use?: string;
 
-  @ApiProperty()
+  @ApiProperty({
+    example: "urban",
+    default: undefined,
+    description: "Категория земель",
+  })
   @ApiPropertyOptional()
   land_category?: string;
 
-  @ApiProperty()
-  @ApiPropertyOptional()
+  @ApiProperty({
+    example: '{"price":"ASC"}',
+    description: "Сортировка",
+    default: '{"id":"DESC"}',
+  })
   sorting: string;
 
-  @ApiProperty()
+  @ApiProperty({
+    enum: AnnouncementShowMethodEnum,
+    default: AnnouncementShowMethodEnum.LIST,
+    description: "Метод показа объявлений",
+  })
   @ApiPropertyOptional()
   provideTag: string;
 
-  @ApiProperty()
+  @ApiProperty({
+    example: "1",
+    default: undefined,
+    description: "Уникальный идентификатор пользователя",
+  })
   @ApiPropertyOptional()
-  userId: number;
+  userId?: number;
 
-  @ApiProperty()
-  regionKladrId: string;
+  @ApiProperty({
+    example: "7700000000000",
+    default: undefined,
+    description: "КЛАДР-код региона",
+  })
+  @ApiPropertyOptional()
+  regionKladrId?: string;
 
-  @ApiProperty()
+  @ApiProperty({
+    example:
+      "45.528087123383635%2C30.393650714062513%2C48.88797931590286%2C49.0154768859375",
+    default: undefined,
+    description: "Координаты видимой области карты",
+  })
+  @ApiPropertyOptional()
   geoBounds?: string;
 
   @ApiProperty({
@@ -84,4 +157,13 @@ export class GetAnnouncementsDto {
     description: "Измерение цены",
   })
   unitPrice?: string;
+  
+  @ApiProperty({
+    enum: AnnouncementStatusesEnum,
+    example: AnnouncementStatusesEnum.AWAIT,
+    default: AnnouncementStatusesEnum.ACTIVE,
+    description: "Статус объявления",
+  })
+  status: string;
+
 }

@@ -1,5 +1,5 @@
 import {
-  AfterUpdate,
+  BeforeUpdate,
   Column,
   Entity,
   Index,
@@ -12,6 +12,7 @@ import {
 import { ApiProperty } from "@nestjs/swagger";
 import { User } from "src/modules/users/entities/users.entity";
 import { Note } from "src/modules/notes/entities/notes.entity";
+import { AnnouncementStatusesEnum } from "../announcement.enum";
 
 @Entity("announcement")
 @Index([
@@ -218,8 +219,12 @@ export class Announcement {
     example: false,
     description: "Флаг проверки объявления",
   })
-  @Column("boolean", { nullable: true })
+  @Column("boolean", { nullable: true, default: false })
   is_checked: boolean;
+
+  @ApiProperty({ description: "Дата проверки" })
+  @Column("timestamp", { nullable: true })
+  date_checked: Date;
 
   @ApiProperty({
     example: "7700000000000",
@@ -256,6 +261,18 @@ export class Announcement {
   @Column("boolean", { nullable: true })
   survey: boolean;
 
+  @ApiProperty({
+    enum: AnnouncementStatusesEnum,
+    example: "active",
+    description: "Статус объявления",
+  })
+  @Column({
+    type: "enum",
+    enum: AnnouncementStatusesEnum,
+    default: AnnouncementStatusesEnum.ACTIVE,
+  })
+  status: string;
+
   @ManyToMany(() => User, (user) => user.favoritiesAnnouncements, {
     onDelete: "CASCADE",
     onUpdate: "CASCADE",
@@ -272,8 +289,9 @@ export class Announcement {
   @OneToMany(() => Note, (note) => note.announcement)
   notes: Note[];
 
-  @AfterUpdate()
+  @BeforeUpdate()
   resetChecked() {
     this.is_checked = false;
+    this.date_checked = null;
   }
 }

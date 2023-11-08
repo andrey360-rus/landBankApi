@@ -40,6 +40,7 @@ export class AnnouncementService {
 
   async create_v2(data: Array<CreateAnnouncementDto>) {
     try {
+      this.setUnitPrice(data);
       this.dateGeneration(data);
       await this.announcementsRepository.save(data);
       return { message: "Объявления успешно добавлены" };
@@ -59,6 +60,7 @@ export class AnnouncementService {
     }
 
     try {
+      this.setUnitPrice(data);
       this.dateGeneration(data) as CreateAnnouncementDto[];
       const formationData = (await this.regionKladrIdGeneration(
         data,
@@ -120,6 +122,7 @@ export class AnnouncementService {
       land_category,
       land_use,
       price,
+      unit_price: price / area,
       title,
       area: area * 10_000,
       photos,
@@ -183,6 +186,7 @@ export class AnnouncementService {
       provideTag = AnnouncementShowMethodEnum.LIST,
       userId,
       geoBounds,
+      unitPrice,
       status = AnnouncementStatusesEnum.ACTIVE,
     } = queryParams;
 
@@ -199,6 +203,8 @@ export class AnnouncementService {
 
     const sortingElement = JSON.parse(sorting);
 
+    const isUnitPrice = JSON.parse(unitPrice);
+
     const geoBoundsArr =
       decodeURIComponent(geoBounds)
         .split(",")
@@ -211,8 +217,8 @@ export class AnnouncementService {
     const MIN = 1;
     const MAX = Infinity;
 
-    const priceFrom = price_from ? price_from : MIN;
-    const priceTo = price_to ? price_to : MAX;
+    let priceFrom = price_from ? price_from : MIN;
+    let priceTo = price_to ? price_to : MAX;
 
     let areaFrom: number;
     let areaTo: number;
@@ -231,11 +237,23 @@ export class AnnouncementService {
       case "hectares":
         areaFrom = area_from ? area_from * 10_000 : MIN;
         areaTo = area_to ? area_to * 10_000 : MAX;
+
+        if (isUnitPrice) {
+          priceFrom = priceFrom / 10_000;
+          priceTo = priceTo / 10_000;
+        }
+
         break;
 
       case "acres":
         areaFrom = area_from ? area_from * 100 : MIN;
         areaTo = area_to ? area_to * 100 : MAX;
+
+        if (isUnitPrice) {
+          priceFrom = priceFrom / 100;
+          priceTo = priceTo / 100;
+        }
+
         break;
 
       case "sm":
@@ -258,8 +276,10 @@ export class AnnouncementService {
           ...sortingElement,
         },
         where: {
+          ...(isUnitPrice
+            ? { unit_price: Between(priceFrom, priceTo) }
+            : { price: Between(priceFrom, priceTo) }),
           status,
-          price: Between(priceFrom, priceTo),
           area: Between(areaFrom, areaTo),
           is_rent,
           ...(domain && { domain: In(domainArray) }),
@@ -349,6 +369,7 @@ export class AnnouncementService {
       survey,
       type_of_use,
       cultivated_crop,
+      price,
     } = updateAnnouncementDto;
 
     let dateRentPeriod: Date | undefined;
@@ -413,6 +434,7 @@ export class AnnouncementService {
       survey: survey === "false" ? false : true,
       rent_period: rentPeriod ? dateRentPeriod : null,
       cultivated_crop: type_of_use === "arable" ? cultivated_crop : null,
+      unit_price: price / newArea,
     });
 
     const editAnnouncement = await this.announcementsRepository.save(
@@ -694,6 +716,14 @@ export class AnnouncementService {
     }
   }
 
+
+  private setUnitPrice(data: CreateAnnouncementDto[]) {
+    for (const announcement of data) {
+      announcement.unit_price = announcement.price / announcement.area;
+    }
+
+    return data;
+  }
 
   async setStatusAnnouncement(data: SetStatusAnnouncementDto) {
     const { id, status } = data;

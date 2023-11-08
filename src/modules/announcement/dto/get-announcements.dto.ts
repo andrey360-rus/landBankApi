@@ -152,10 +152,18 @@ export class GetAnnouncementsDto {
   geoBounds?: string;
 
   @ApiProperty({
+    example: "true",
+    default: undefined,
+    description: "Измерение цены",
+  })
+  unitPrice?: string;
+  
+  @ApiProperty({
     enum: AnnouncementStatusesEnum,
     example: AnnouncementStatusesEnum.AWAIT,
     default: AnnouncementStatusesEnum.ACTIVE,
     description: "Статус объявления",
   })
   status: string;
+
 }

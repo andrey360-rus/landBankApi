@@ -71,6 +71,13 @@ export class Announcement {
   price: number;
 
   @ApiProperty({
+    example: "1000000",
+    description: "Цена за единицу площади",
+  })
+  @Column("float", { nullable: true })
+  unit_price: number;
+
+  @ApiProperty({
     type: "array",
     items: {
       type: "string",

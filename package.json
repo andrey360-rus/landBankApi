@@ -29,6 +29,7 @@
     "@nestjs/graphql": "^9.1.2",
     "@nestjs/jwt": "^10.1.0",
     "@nestjs/platform-express": "^8.0.0",
+    "@nestjs/schedule": "^4.0.0",
     "@nestjs/sequelize": "^8.0.0",
     "@nestjs/serve-static": "^4.0.0",
     "@nestjs/swagger": "^6.3.0",

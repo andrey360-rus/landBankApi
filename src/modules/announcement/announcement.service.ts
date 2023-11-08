@@ -53,8 +53,11 @@ export class AnnouncementService {
     }
 
     try {
-      this.dateGeneration(data);
-      const formationData = await this.regionKladrIdGeneration(data);
+      this.dateGeneration(data) as CreateAnnouncementDto[];
+      const formationData = (await this.regionKladrIdGeneration(
+        data,
+        process.env.DADATA_API_KEY
+      )) as CreateAnnouncementDto[];
 
       await this.announcementsRepository.save(formationData);
       return { message: "Объявления успешно добавлены" };
@@ -538,34 +541,45 @@ export class AnnouncementService {
     );
   }
 
-  private dateGeneration(data: CreateAnnouncementDto[]) {
-    data.forEach((announcement) => {
-      const { date_published, date_updated } = announcement;
-      if (date_published && date_updated && date_published !== "NULL") {
-        const dateArr = [date_published, date_updated];
+  private dateGeneration(data: CreateAnnouncementDto[] | Announcement[]) {
+    data.forEach(
+      (announcement: {
+        date_published: string | Date;
+        date_updated: string | Date;
+      }) => {
+        const { date_published, date_updated } = announcement;
+        if (date_published && date_updated && date_published !== "NULL") {
+          const dateArr = [date_published, date_updated];
 
-        const newDateArr = dateArr.map((date) => {
-          const parseDate = this.datesService.parseDate(date);
+          const newDateArr = dateArr.map((date) => {
+            const parseDate = this.datesService.parseDate(date as string);
 
-          const generatedDate = this.datesService.formateDate(parseDate);
+            const generatedDate = this.datesService.formateDate(parseDate);
 
-          return generatedDate;
-        });
+            return generatedDate;
+          });
 
-        announcement.date_published = newDateArr[0];
-        announcement.date_updated = newDateArr[1];
+          announcement.date_published = newDateArr[0];
+          announcement.date_updated = newDateArr[1];
+        }
       }
-    });
+    );
 
     return data;
   }
 
-  private async regionKladrIdGeneration(data: CreateAnnouncementDto[]) {
+  private async regionKladrIdGeneration(
+    data: CreateAnnouncementDto[] | Announcement[],
+    token: string
+  ) {
     for (const announcement of data) {
-      const regionKladrId = await this.getRegionKladrId({
-        lat: announcement.lat,
-        lon: announcement.lon,
-      });
+      const regionKladrId = await this.getRegionKladrId(
+        {
+          lat: announcement.lat,
+          lon: announcement.lon,
+        },
+        token
+      );
 
       announcement.region_kladr_id = regionKladrId;
     }
@@ -573,10 +587,9 @@ export class AnnouncementService {
     return data;
   }
 
-  private async getRegionKladrId(announcementCoords: ICoords) {
+  private async getRegionKladrId(announcementCoords: ICoords, token: string) {
     const url =
       "https://suggestions.dadata.ru/suggestions/api/4_1/rs/geolocate/address";
-    const token = process.env.DADATA_API_KEY;
     const { lat, lon } = announcementCoords;
     const query = { lat, lon };
     const options = {
@@ -664,5 +677,47 @@ export class AnnouncementService {
     } catch (error) {
       throw new HttpException("Произошла ошибка!", HttpStatus.BAD_REQUEST);
     }
+  }
+
+  async setRegionKladrIdAndDate(
+    dadataApiKeys: string[],
+    queryParams: { count: string }
+  ) {
+    const limit = 1000;
+    const apiRequestsLimit = 10_000;
+    let offset = +queryParams.count;
+    let breakFor = false;
+
+    for (let i = 0; i < dadataApiKeys.length; i++) {
+      if (breakFor) {
+        break;
+      }
+
+      let adCounter = 0;
+
+      while (adCounter < apiRequestsLimit) {
+        const announcements = await this.connection.manager.find(Announcement, {
+          skip: offset,
+          take: limit,
+        });
+
+        if (!announcements.length) {
+          breakFor = true;
+          break;
+        }
+
+        const formationData = (await this.regionKladrIdGeneration(
+          announcements,
+          dadataApiKeys[i]
+        )) as Announcement[];
+
+        await this.connection.manager.save(Announcement, formationData);
+
+        adCounter += limit;
+        offset += limit;
+      }
+    }
+
+    return "Регионы и даты успешно присвоены";
   }
 }

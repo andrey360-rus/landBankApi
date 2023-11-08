@@ -12,6 +12,7 @@ import {
 import { ApiProperty } from "@nestjs/swagger";
 import { User } from "src/modules/users/entities/users.entity";
 import { Note } from "src/modules/notes/entities/notes.entity";
+import { AnnouncementStatusesEnum } from "../announcement.enum";
 
 @Entity("announcement")
 @Index([
@@ -211,7 +212,7 @@ export class Announcement {
     example: false,
     description: "Флаг проверки объявления",
   })
-  @Column("boolean", { nullable: true })
+  @Column("boolean", { nullable: true, default: false })
   is_checked: boolean;
 
   @ApiProperty({ description: "Дата проверки" })
@@ -252,6 +253,18 @@ export class Announcement {
   })
   @Column("boolean", { nullable: true })
   survey: boolean;
+
+  @ApiProperty({
+    enum: AnnouncementStatusesEnum,
+    example: "active",
+    description: "Статус объявления",
+  })
+  @Column({
+    type: "enum",
+    enum: AnnouncementStatusesEnum,
+    default: AnnouncementStatusesEnum.ACTIVE,
+  })
+  status: string;
 
   @ManyToMany(() => User, (user) => user.favoritiesAnnouncements, {
     onDelete: "CASCADE",

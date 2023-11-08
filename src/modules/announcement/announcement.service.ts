@@ -20,6 +20,12 @@ import { deleteStaticFiles } from "src/utils/deleteStaticFiles";
 import { myAnnouncementDomain } from "src/modules/announcement/announcement.consts";
 import { CreateOneAnnouncementDto } from "./dto/create-one-announcement.dto";
 import { ICoords } from "./interfaces/announcement.interface";
+import {
+  AnnouncementShowMethodEnum,
+  AnnouncementStatusesEnum,
+  AreaUnitEnum,
+} from "./announcement.enum";
+import { SetStatusAnnouncementDto } from "./dto/set-status-announcement.dto";
 
 @Injectable()
 export class AnnouncementService {
@@ -144,6 +150,7 @@ export class AnnouncementService {
       irrigation: irrigation === "false" ? false : true,
       survey: survey === "false" ? false : true,
       rent_period: rentPeriod ? dateRentPeriod : null,
+      status: AnnouncementStatusesEnum.AWAIT,
       user: {
         id: +userId,
       },
@@ -166,19 +173,20 @@ export class AnnouncementService {
       area_from,
       domain,
       address,
-      areaUnit = "hectares",
+      areaUnit = AreaUnitEnum.HECTARES,
       is_rent = false,
       keyword,
       date_range = undefined,
       land_use,
       land_category,
       sorting,
-      provideTag,
+      provideTag = AnnouncementShowMethodEnum.LIST,
       userId,
       geoBounds,
+      status = AnnouncementStatusesEnum.ACTIVE,
     } = queryParams;
 
-    const isMapMethod = provideTag === "Ads_map";
+    const isMapMethod = provideTag === AnnouncementShowMethodEnum.MAP;
 
     const domainArray = decodeURIComponent(domain).split(",") || undefined;
 
@@ -250,6 +258,7 @@ export class AnnouncementService {
           ...sortingElement,
         },
         where: {
+          status,
           price: Between(priceFrom, priceTo),
           area: Between(areaFrom, areaTo),
           is_rent,
@@ -685,6 +694,14 @@ export class AnnouncementService {
     }
   }
 
+
+  async setStatusAnnouncement(data: SetStatusAnnouncementDto) {
+    const { id, status } = data;
+    await this.announcementsRepository.update({ id }, { status });
+
+    return { id, status };
+  }
+  
   async setRegionKladrIdAndDate(
     dadataApiKeys: string[],
     queryParams: { count: string }

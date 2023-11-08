@@ -43,6 +43,7 @@ import { FilesInterceptor } from "@nestjs/platform-express";
 import { storage } from "./announcement.consts";
 import { CreateAnnouncementsApiOkResponse } from "./swagger/api-response/create-announcements.type";
 import { CreateOneAnnouncementDto } from "./dto/create-one-announcement.dto";
+import { SetStatusAnnouncementDto } from "./dto/set-status-announcement.dto";
 
 @Controller("announcements")
 @ApiTags("Объявления")
@@ -98,8 +99,8 @@ export class AnnouncementController {
   })
   @ApiBearerAuth()
   @ApiConsumes("multipart/form-data")
-  @Roles("ADMIN", "ADS_EDITOR")
-  @UseGuards(RolesGuard)
+  // @Roles("ADMIN", "ADS_EDITOR")
+  @UseGuards(JwtAuthGuard)
   @Post("add_one")
   @UseInterceptors(FilesInterceptor("photos", 10, storage))
   createOne(
@@ -263,6 +264,7 @@ export class AnnouncementController {
   }
 
   @ApiOperation({ summary: "Изменить флаг проверки объявления" })
+  @ApiBody({ type: ToggleCheckedAnnouncementDto })
   @ApiOkResponse({
     description: "Флаг успешно изменен",
     type: ToggleCheckedAnnouncementDto,
@@ -278,5 +280,25 @@ export class AnnouncementController {
     @Body() toggleCheckedAnnouncementDto: ToggleCheckedAnnouncementDto
   ) {
     return this.announcementService.toggleChecked(toggleCheckedAnnouncementDto);
+  }
+
+  @ApiOperation({ summary: "Изменить статус объявления" })
+  @ApiBody({ type: SetStatusAnnouncementDto })
+  @ApiOkResponse({
+    description: "Статус успешно изменен",
+    type: SetStatusAnnouncementDto,
+  })
+  @ApiForbiddenResponse({
+    description: "Недостаточно прав",
+  })
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @Patch(":id/status")
+  setStatusAnnouncement(
+    @Body() setStatusAnnouncementDto: SetStatusAnnouncementDto
+  ) {
+    return this.announcementService.setStatusAnnouncement(
+      setStatusAnnouncementDto
+    );
   }
 }

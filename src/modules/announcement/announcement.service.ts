@@ -716,7 +716,6 @@ export class AnnouncementService {
     }
   }
 
-
   private setUnitPrice(data: CreateAnnouncementDto[]) {
     for (const announcement of data) {
       announcement.unit_price = announcement.price / announcement.area;
@@ -731,7 +730,7 @@ export class AnnouncementService {
 
     return { id, status };
   }
-  
+
   async setRegionKladrIdAndDate(
     dadataApiKeys: string[],
     queryParams: { count: string }
@@ -749,7 +748,7 @@ export class AnnouncementService {
       let adCounter = 0;
 
       while (adCounter < apiRequestsLimit) {
-        const announcements = await this.connection.manager.find(Announcement, {
+        const announcements = await this.announcementsRepository.find({
           skip: offset,
           take: limit,
         });
@@ -764,7 +763,7 @@ export class AnnouncementService {
           dadataApiKeys[i]
         )) as Announcement[];
 
-        await this.connection.manager.save(Announcement, formationData);
+        await this.announcementsRepository.save(formationData);
 
         adCounter += limit;
         offset += limit;

@@ -40,10 +40,10 @@ export class AnnouncementService {
 
   async create_v2(data: Array<CreateAnnouncementDto>) {
     try {
-      // const uniqueData = await this.checkUnique(data);
-      // this.setUnitPrice(data);
-      // this.dateGeneration(data);
-      await this.announcementsRepository.save(data);
+      const uniqueData = await this.checkUnique(data);
+      this.setUnitPrice(uniqueData);
+      this.dateGeneration(uniqueData);
+      await this.announcementsRepository.save(uniqueData);
       return { message: "Объявления успешно добавлены" };
     } catch (error) {
       throw new BadRequestException("Ошибка при добавлении объявлений");
@@ -109,8 +109,6 @@ export class AnnouncementService {
         address,
       },
     });
-
-    console.log(createAnnouncementDto);
 
     if (candidateAnnouncement) {
       throw new BadRequestException(

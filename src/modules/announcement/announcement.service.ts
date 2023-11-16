@@ -96,6 +96,7 @@ export class AnnouncementService {
       irrigation,
       survey,
       cultivated_crop,
+      cadastral_number,
     } = createAnnouncementDto;
 
     const limit = await this.checkBalanceRequestApiDaData();
@@ -143,7 +144,7 @@ export class AnnouncementService {
       date_published,
       date_updated: null,
       owner_name: null,
-      cadastral_number: null,
+      cadastral_number,
       domain: myAnnouncementDomain,
       url: null,
       region_kladr_id,
@@ -370,6 +371,7 @@ export class AnnouncementService {
       type_of_use,
       cultivated_crop,
       price,
+      cadastral_number,
     } = updateAnnouncementDto;
 
     let dateRentPeriod: Date | undefined;
@@ -435,6 +437,7 @@ export class AnnouncementService {
       rent_period: rentPeriod ? dateRentPeriod : null,
       cultivated_crop: type_of_use === "arable" ? cultivated_crop : null,
       unit_price: price / newArea,
+      cadastral_number,
     });
 
     const editAnnouncement = await this.announcementsRepository.save(

@@ -40,9 +40,10 @@ export class AnnouncementService {
 
   async create_v2(data: Array<CreateAnnouncementDto>) {
     try {
-      this.setUnitPrice(data);
-      this.dateGeneration(data);
-      await this.announcementsRepository.save(data);
+      const uniqueData = await this.checkUnique(data);
+      this.setUnitPrice(uniqueData);
+      this.dateGeneration(uniqueData);
+      await this.announcementsRepository.save(uniqueData);
       return { message: "Объявления успешно добавлены" };
     } catch (error) {
       throw new BadRequestException("Ошибка при добавлении объявлений");
@@ -60,10 +61,11 @@ export class AnnouncementService {
     }
 
     try {
-      this.setUnitPrice(data);
-      this.dateGeneration(data) as CreateAnnouncementDto[];
+      const uniqueData = await this.checkUnique(data);
+      this.setUnitPrice(uniqueData);
+      this.dateGeneration(uniqueData) as CreateAnnouncementDto[];
       const formationData = (await this.regionKladrIdGeneration(
-        data,
+        uniqueData,
         process.env.DADATA_API_KEY
       )) as CreateAnnouncementDto[];
 
@@ -99,6 +101,22 @@ export class AnnouncementService {
       cadastral_number,
     } = createAnnouncementDto;
 
+    const candidateAnnouncement = await this.announcementsRepository.findOne({
+      where: {
+        title,
+        price,
+        area: area * 10_000,
+        status: AnnouncementStatusesEnum.ACTIVE,
+        address,
+      },
+    });
+
+    if (candidateAnnouncement) {
+      throw new BadRequestException(
+        "Объявление с такими параметрами уже есть в базе!"
+      );
+    }
+
     const limit = await this.checkBalanceRequestApiDaData();
 
     if (limit === 0) {
@@ -123,7 +141,7 @@ export class AnnouncementService {
       land_category,
       land_use,
       price,
-      unit_price: price / area,
+      unit_price: price / (area * 10_000),
       title,
       area: area * 10_000,
       photos,
@@ -581,8 +599,10 @@ export class AnnouncementService {
     );
   }
 
-  private dateGeneration(data: CreateAnnouncementDto[] | Announcement[]) {
-    data.forEach(
+  private dateGeneration(
+    announcements: CreateAnnouncementDto[] | Announcement[]
+  ) {
+    announcements.forEach(
       (announcement: {
         date_published: string | Date;
         date_updated: string | Date;
@@ -605,14 +625,14 @@ export class AnnouncementService {
       }
     );
 
-    return data;
+    return announcements;
   }
 
   private async regionKladrIdGeneration(
-    data: CreateAnnouncementDto[] | Announcement[],
+    announcements: CreateAnnouncementDto[] | Announcement[],
     token: string
   ) {
-    for (const announcement of data) {
+    for (const announcement of announcements) {
       const regionKladrId = await this.getRegionKladrId(
         {
           lat: announcement.lat,
@@ -624,7 +644,7 @@ export class AnnouncementService {
       announcement.region_kladr_id = regionKladrId;
     }
 
-    return data;
+    return announcements;
   }
 
   private async getRegionKladrId(announcementCoords: ICoords, token: string) {
@@ -719,12 +739,12 @@ export class AnnouncementService {
     }
   }
 
-  private setUnitPrice(data: CreateAnnouncementDto[]) {
-    for (const announcement of data) {
+  private setUnitPrice(announcements: CreateAnnouncementDto[]) {
+    for (const announcement of announcements) {
       announcement.unit_price = announcement.price / announcement.area;
     }
 
-    return data;
+    return announcements;
   }
 
   async setStatusAnnouncement(data: SetStatusAnnouncementDto) {
@@ -774,5 +794,26 @@ export class AnnouncementService {
     }
 
     return "Регионы и даты успешно присвоены";
+  }
+
+  private async checkUnique(announcements: CreateAnnouncementDto[]) {
+    const filteredAnnouncements: CreateAnnouncementDto[] = [];
+
+    for (let i = 0; i < announcements.length; i++) {
+      const candidateAnnouncement = await this.announcementsRepository.findOne({
+        where: {
+          title: announcements[i].title,
+          price: announcements[i].price,
+          area: announcements[i].area,
+          address: announcements[i].address,
+        },
+      });
+
+      if (!candidateAnnouncement) {
+        filteredAnnouncements.push(announcements[i]);
+      }
+    }
+
+    return filteredAnnouncements;
   }
 }

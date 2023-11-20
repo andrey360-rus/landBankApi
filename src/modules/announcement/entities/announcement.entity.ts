@@ -8,6 +8,7 @@ import {
   ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
+  // Unique,
 } from "typeorm";
 import { ApiProperty } from "@nestjs/swagger";
 import { User } from "src/modules/users/entities/users.entity";
@@ -15,6 +16,7 @@ import { Note } from "src/modules/notes/entities/notes.entity";
 import { AnnouncementStatusesEnum } from "../announcement.enum";
 
 @Entity("announcement")
+// @Unique(["title", "price", "area"])
 @Index([
   "area",
   "price",

@@ -7,7 +7,7 @@ import {
 import { CreateAnnouncementDto } from "./dto/create-announcement.dto";
 import { UpdateAnnouncementDto } from "./dto/update-announcement.dto";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Between, ILike, In, MoreThanOrEqual, Repository } from "typeorm";
+import { Between, ILike, In, MoreThanOrEqual, Not, Repository } from "typeorm";
 import { Announcement } from "./entities/announcement.entity";
 import { GetAnnouncementsDto } from "./dto/get-announcements.dto";
 import { ToggleCheckedAnnouncementDto } from "./dto/toggle-checked-announcement.dto";
@@ -38,43 +38,43 @@ export class AnnouncementService {
     private readonly userService: UsersService
   ) {}
 
-  async create_v2(data: Array<CreateAnnouncementDto>) {
-    try {
-      const uniqueData = await this.checkUnique(data);
-      this.setUnitPrice(uniqueData);
-      this.dateGeneration(uniqueData);
-      await this.announcementsRepository.save(uniqueData);
-      return { message: "Объявления успешно добавлены" };
-    } catch (error) {
-      throw new BadRequestException("Ошибка при добавлении объявлений");
-    }
-  }
+  // async create_v2(data: Array<CreateAnnouncementDto>) {
+  //   try {
+  //     // const uniqueData = await this.checkUnique(data);
+  //     // this.setUnitPrice(uniqueData);
+  //     // this.dateGeneration(uniqueData);
+  //     await this.announcementsRepository.save(uniqueData);
+  //     return { message: "Объявления успешно добавлены" };
+  //   } catch (error) {
+  //     throw new BadRequestException("Ошибка при добавлении объявлений");
+  //   }
+  // }
 
-  async create(data: Array<CreateAnnouncementDto>) {
-    const limit = await this.checkBalanceRequestApiDaData();
+  // async create(data: Array<CreateAnnouncementDto>) {
+  //   const limit = await this.checkBalanceRequestApiDaData();
 
-    if (data.length > limit) {
-      throw new HttpException(
-        `Единожды можно добавить не больше ${limit} объявлений`,
-        HttpStatus.BAD_REQUEST
-      );
-    }
+  //   if (data.length > limit) {
+  //     throw new HttpException(
+  //       `Единожды можно добавить не больше ${limit} объявлений`,
+  //       HttpStatus.BAD_REQUEST
+  //     );
+  //   }
 
-    try {
-      const uniqueData = await this.checkUnique(data);
-      this.setUnitPrice(uniqueData);
-      this.dateGeneration(uniqueData) as CreateAnnouncementDto[];
-      const formationData = (await this.regionKladrIdGeneration(
-        uniqueData,
-        process.env.DADATA_API_KEY
-      )) as CreateAnnouncementDto[];
+  //   try {
+  //     const uniqueData = await this.checkUnique(data);
+  //     // this.setUnitPrice(uniqueData);
+  //     // this.dateGeneration(uniqueData) as CreateAnnouncementDto[];
+  //     const formationData = (await this.regionKladrIdGeneration(
+  //       uniqueData,
+  //       process.env.DADATA_API_KEY
+  //     )) as CreateAnnouncementDto[];
 
-      await this.announcementsRepository.save(formationData);
-      return { message: "Объявления успешно добавлены" };
-    } catch (error) {
-      throw new BadRequestException("Ошибка при добавлении объявлений");
-    }
-  }
+  //     await this.announcementsRepository.save(formationData);
+  //     return { message: "Объявления успешно добавлены" };
+  //   } catch (error) {
+  //     throw new BadRequestException("Ошибка при добавлении объявлений");
+  //   }
+  // }
 
   async createOne(
     files: Express.Multer.File[],
@@ -101,11 +101,13 @@ export class AnnouncementService {
       cadastral_number,
     } = createAnnouncementDto;
 
+    const formattedArea = area * 10_000;
+
     const candidateAnnouncement = await this.announcementsRepository.findOne({
       where: {
         title,
         price,
-        area: area * 10_000,
+        area: formattedArea,
         status: AnnouncementStatusesEnum.ACTIVE,
         address,
       },
@@ -141,9 +143,9 @@ export class AnnouncementService {
       land_category,
       land_use,
       price,
-      unit_price: price / (area * 10_000),
+      unit_price: price / formattedArea,
       title,
-      area: area * 10_000,
+      area: formattedArea,
       photos,
       address,
       land_class: null,
@@ -599,40 +601,41 @@ export class AnnouncementService {
     );
   }
 
-  private dateGeneration(
-    announcements: CreateAnnouncementDto[] | Announcement[]
-  ) {
-    announcements.forEach(
-      (announcement: {
-        date_published: string | Date;
-        date_updated: string | Date;
-      }) => {
-        const { date_published, date_updated } = announcement;
-        if (date_published && date_updated && date_published !== "NULL") {
-          const dateArr = [date_published, date_updated];
+  // private dateGeneration(
+  //   announcements: CreateAnnouncementDto[] | Announcement[]
+  // ) {
+  //   announcements.forEach(
+  //     (announcement: {
+  //       date_published: string | Date;
+  //       date_updated: string | Date;
+  //     }) => {
+  //       const { date_published, date_updated } = announcement;
+  //       if (date_published && date_updated && date_published !== "NULL") {
+  //         const dateArr = [date_published, date_updated];
 
-          const newDateArr = dateArr.map((date) => {
-            const parseDate = this.datesService.parseDate(date as string);
+  //         const newDateArr = dateArr.map((date) => {
+  //           const parseDate = this.datesService.parseDate(date as string);
 
-            const generatedDate = this.datesService.formateDate(parseDate);
+  //           const generatedDate = this.datesService.formateDate(parseDate);
 
-            return generatedDate;
-          });
+  //           return generatedDate;
+  //         });
 
-          announcement.date_published = newDateArr[0];
-          announcement.date_updated = newDateArr[1];
-        }
-      }
-    );
+  //         announcement.date_published = newDateArr[0];
+  //         announcement.date_updated = newDateArr[1];
+  //       }
+  //     }
+  //   );
 
-    return announcements;
-  }
+  //   return announcements;
+  // }
 
   private async regionKladrIdGeneration(
     announcements: CreateAnnouncementDto[] | Announcement[],
     token: string
   ) {
     for (const announcement of announcements) {
+      // if (!announcement.region_kladr_id) {
       const regionKladrId = await this.getRegionKladrId(
         {
           lat: announcement.lat,
@@ -643,6 +646,7 @@ export class AnnouncementService {
 
       announcement.region_kladr_id = regionKladrId;
     }
+    // }
 
     return announcements;
   }
@@ -665,18 +669,21 @@ export class AnnouncementService {
 
     try {
       const res = await fetch(url, options);
-      const resJson = await res.json();
 
-      if (!resJson.suggestions.length) {
-        return null;
+      if (res.ok) {
+        const resJson = await res.json();
+
+        if (!resJson.suggestions.length) {
+          return null;
+        }
+
+        const regionKladrId: string =
+          resJson.suggestions[0].data.region_kladr_id;
+
+        return regionKladrId;
       }
-
-      const regionKladrId: string =
-        resJson.suggestions[0].data.region_kladr_id.toString();
-
-      return regionKladrId;
     } catch (error) {
-      throw new HttpException("Некорректный адрес", HttpStatus.BAD_REQUEST);
+      return null;
     }
   }
 
@@ -739,13 +746,13 @@ export class AnnouncementService {
     }
   }
 
-  private setUnitPrice(announcements: CreateAnnouncementDto[]) {
-    for (const announcement of announcements) {
-      announcement.unit_price = announcement.price / announcement.area;
-    }
+  // private setUnitPrice(announcements: CreateAnnouncementDto[]) {
+  //   for (const announcement of announcements) {
+  //     announcement.unit_price = announcement.price / announcement.area;
+  //   }
 
-    return announcements;
-  }
+  //   return announcements;
+  // }
 
   async setStatusAnnouncement(data: SetStatusAnnouncementDto) {
     const { id, status } = data;
@@ -754,7 +761,7 @@ export class AnnouncementService {
     return { id, status };
   }
 
-  async setRegionKladrIdAndDate(
+  async setRegionKladrId(
     dadataApiKeys: string[],
     queryParams: { count: string }
   ) {
@@ -772,6 +779,12 @@ export class AnnouncementService {
 
       while (adCounter < apiRequestsLimit) {
         const announcements = await this.announcementsRepository.find({
+          where: {
+            domain: Not(myAnnouncementDomain),
+          },
+          order: {
+            id: "ASC",
+          },
           skip: offset,
           take: limit,
         });
@@ -793,27 +806,27 @@ export class AnnouncementService {
       }
     }
 
-    return "Регионы и даты успешно присвоены";
+    return "Регионы успешно присвоены";
   }
 
-  private async checkUnique(announcements: CreateAnnouncementDto[]) {
-    const filteredAnnouncements: CreateAnnouncementDto[] = [];
+  // private async checkUnique(announcements: CreateAnnouncementDto[]) {
+  //   const filteredAnnouncements: CreateAnnouncementDto[] = [];
 
-    for (let i = 0; i < announcements.length; i++) {
-      const candidateAnnouncement = await this.announcementsRepository.findOne({
-        where: {
-          title: announcements[i].title,
-          price: announcements[i].price,
-          area: announcements[i].area,
-          address: announcements[i].address,
-        },
-      });
+  //   for (let i = 0; i < announcements.length; i++) {
+  //     const candidateAnnouncement = await this.announcementsRepository.findOne({
+  //       where: {
+  //         title: announcements[i].title,
+  //         price: announcements[i].price,
+  //         area: announcements[i].area,
+  //         address: announcements[i].address,
+  //       },
+  //     });
 
-      if (!candidateAnnouncement) {
-        filteredAnnouncements.push(announcements[i]);
-      }
-    }
+  //     if (!candidateAnnouncement) {
+  //       filteredAnnouncements.push(announcements[i]);
+  //     }
+  //   }
 
-    return filteredAnnouncements;
-  }
+  //   return filteredAnnouncements;
+  // }
 }

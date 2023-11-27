@@ -12,7 +12,7 @@ import {
   UploadedFiles,
 } from "@nestjs/common";
 import { AnnouncementService } from "./announcement.service";
-import { CreateAnnouncementDto } from "./dto/create-announcement.dto";
+// import { CreateAnnouncementDto } from "./dto/create-announcement.dto";
 import { UpdateAnnouncementDto } from "./dto/update-announcement.dto";
 import {
   ApiBadRequestResponse,
@@ -41,7 +41,7 @@ import {
 import { AddToFavoritiesAnnouncementsErrorResponse } from "./swagger/api-response/add-to-favorite-announcements.type";
 import { FilesInterceptor } from "@nestjs/platform-express";
 import { storage } from "./announcement.consts";
-import { CreateAnnouncementsApiOkResponse } from "./swagger/api-response/create-announcements.type";
+// import { CreateAnnouncementsApiOkResponse } from "./swagger/api-response/create-announcements.type";
 import { CreateOneAnnouncementDto } from "./dto/create-one-announcement.dto";
 import { SetStatusAnnouncementDto } from "./dto/set-status-announcement.dto";
 
@@ -50,44 +50,44 @@ import { SetStatusAnnouncementDto } from "./dto/set-status-announcement.dto";
 export class AnnouncementController {
   constructor(private readonly announcementService: AnnouncementService) {}
 
-  @Post("set_data")
+  @Post("set_region_id")
   setRegionKladrIdAndDate(
     @Body() dadataApiKeys: string[],
     @Query() queryParams: { count: string }
   ) {
-    return this.announcementService.setRegionKladrIdAndDate(
+    return this.announcementService.setRegionKladrId(
       dadataApiKeys,
       queryParams
     );
   }
 
-  @ApiOperation({ summary: "Создать объявления из парсера" })
-  @ApiCreatedResponse({
-    type: CreateAnnouncementsApiOkResponse,
-    description: "Объявления успешно добавлены",
-  })
-  @ApiBadRequestResponse({
-    description: "Недействительный запрос",
-  })
-  @ApiBody({ type: [CreateAnnouncementDto] })
-  @Post("add_v2")
-  create_v2(@Body() createAnnouncementDto: CreateAnnouncementDto[]) {
-    return this.announcementService.create_v2(createAnnouncementDto);
-  }
+  // @ApiOperation({ summary: "Создать объявления из парсера" })
+  // @ApiCreatedResponse({
+  //   type: CreateAnnouncementsApiOkResponse,
+  //   description: "Объявления успешно добавлены",
+  // })
+  // @ApiBadRequestResponse({
+  //   description: "Недействительный запрос",
+  // })
+  // @ApiBody({ type: [CreateAnnouncementDto] })
+  // @Post("add_v2")
+  // create_v2(@Body() createAnnouncementDto: CreateAnnouncementDto[]) {
+  //   return this.announcementService.create_v2(createAnnouncementDto);
+  // }
 
-  @ApiOperation({ summary: "Создать объявления из парсера" })
-  @ApiCreatedResponse({
-    type: CreateAnnouncementsApiOkResponse,
-    description: "Объявления успешно добавлены",
-  })
-  @ApiBadRequestResponse({
-    description: "Недействительный запрос",
-  })
-  @ApiBody({ type: [CreateAnnouncementDto] })
-  @Post("add")
-  create(@Body() createAnnouncementDto: CreateAnnouncementDto[]) {
-    return this.announcementService.create(createAnnouncementDto);
-  }
+  // @ApiOperation({ summary: "Создать объявления из парсера" })
+  // @ApiCreatedResponse({
+  //   type: CreateAnnouncementsApiOkResponse,
+  //   description: "Объявления успешно добавлены",
+  // })
+  // @ApiBadRequestResponse({
+  //   description: "Недействительный запрос",
+  // })
+  // @ApiBody({ type: [CreateAnnouncementDto] })
+  // @Post("add")
+  // create(@Body() createAnnouncementDto: CreateAnnouncementDto[]) {
+  //   return this.announcementService.create(createAnnouncementDto);
+  // }
 
   @ApiOperation({ summary: "Создать объявление" })
   @ApiCreatedResponse({

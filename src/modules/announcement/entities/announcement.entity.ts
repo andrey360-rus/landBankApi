@@ -8,7 +8,6 @@ import {
   ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
-  // Unique,
 } from "typeorm";
 import { ApiProperty } from "@nestjs/swagger";
 import { User } from "src/modules/users/entities/users.entity";
@@ -16,7 +15,6 @@ import { Note } from "src/modules/notes/entities/notes.entity";
 import { AnnouncementStatusesEnum } from "../announcement.enum";
 
 @Entity("announcement")
-// @Unique(["title", "price", "area"])
 @Index([
   "area",
   "price",
@@ -26,6 +24,9 @@ import { AnnouncementStatusesEnum } from "../announcement.enum";
   "is_rent",
   "date_published",
   "region_kladr_id",
+  "lat",
+  "lon",
+  "unit_price",
 ])
 export class Announcement {
   @ApiProperty({
@@ -39,7 +40,7 @@ export class Announcement {
     example: "Участок 20 соток",
     description: "Заголовок объявления",
   })
-  @Column("text")
+  @Column("text", { nullable: true })
   title: string;
 
   @ApiProperty({
@@ -71,13 +72,6 @@ export class Announcement {
   })
   @Column("float")
   price: number;
-
-  @ApiProperty({
-    example: "1000000",
-    description: "Цена за единицу площади",
-  })
-  @Column("float", { nullable: true })
-  unit_price: number;
 
   @ApiProperty({
     type: "array",
@@ -154,10 +148,6 @@ export class Announcement {
   })
   @Column("boolean")
   is_rent: boolean;
-
-  @ApiProperty({ description: "Срок договора аренды" })
-  @Column("timestamp", { nullable: true })
-  rent_period: Date;
 
   @ApiProperty()
   @Column("boolean", { nullable: true })
@@ -262,6 +252,17 @@ export class Announcement {
   })
   @Column("boolean", { nullable: true })
   survey: boolean;
+
+  @ApiProperty({ description: "Срок договора аренды" })
+  @Column("timestamp", { nullable: true })
+  rent_period: Date;
+
+  @ApiProperty({
+    example: "1000000",
+    description: "Цена за единицу площади",
+  })
+  @Column("float", { nullable: true })
+  unit_price: number;
 
   @ApiProperty({
     enum: AnnouncementStatusesEnum,

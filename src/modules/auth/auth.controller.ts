@@ -94,4 +94,13 @@ export class AuthController {
   ) {
     return this.authService.changePassword(userFromReq, changePasswordDto);
   }
+
+  @ApiOperation({ summary: "Потверждение регистрации" })
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @UsePipes(ValidationPipe)
+  @Patch("/verifyEmail")
+  async verifyEmail(@UserFromReq() userFromReq: User) {
+    return this.authService.verifyEmail(userFromReq);
+  }
 }

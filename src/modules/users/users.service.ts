@@ -5,6 +5,8 @@ import { Repository } from "typeorm";
 import { CreateUserDto } from "./dto/create-user.dto";
 import { RolesService } from "../roles/roles.service";
 import { AddRoleDto } from "./dto/add-role.dto";
+import { RolesEnum } from "../roles/roles.enum";
+import { SetStatusUserDto } from "./dto/set-status-user.dto";
 
 @Injectable()
 export class UsersService {
@@ -17,7 +19,7 @@ export class UsersService {
   async create(data: CreateUserDto) {
     const user = this.usersRepository.create(data);
 
-    const role = await this.roleService.findRoleByValue("USER");
+    const role = await this.roleService.findRoleByValue(RolesEnum.USER);
 
     const userWithRoles = { ...user, roles: [...[role]] };
 
@@ -74,5 +76,21 @@ export class UsersService {
       "Пользователь или роль не найдены",
       HttpStatus.NOT_FOUND
     );
+  }
+
+  async setStatusUser(data: SetStatusUserDto) {
+    const { id, isActive } = data;
+
+    await this.usersRepository.update({ id }, { isActive });
+
+    return { id, isActive };
+  }
+
+  async checkActiveUser(userFromReq: User) {
+    const { id } = userFromReq;
+
+    const user = await this.findById(id);
+
+    return { isActiveStatus: user.isActive };
   }
 }

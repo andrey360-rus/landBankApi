@@ -26,6 +26,13 @@ export class User {
   password: string;
 
   @ApiProperty({
+    example: false,
+    description: "Статус регистрации пользователя",
+  })
+  @Column("boolean", { default: false, nullable: false })
+  isActive: boolean;
+
+  @ApiProperty({
     type: "array",
     items: {
       example: {

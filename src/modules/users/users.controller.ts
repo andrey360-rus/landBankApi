@@ -25,6 +25,7 @@ import { ValidationPipe } from "src/pipes/validation.pipe";
 import { FindAllOkResponse } from "./swagger/api-response/find-all-response.type";
 import { AddRoleErrorResponse } from "./swagger/api-response/add-role-response.type";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
+import { UserFromReq } from "../auth/decorators/user.decorator";
 
 @ApiTags("Пользователи")
 @ApiBearerAuth()
@@ -52,6 +53,14 @@ export class UsersController {
   @Get()
   findAll() {
     return this.usersService.findAll();
+  }
+
+  @ApiOperation({ summary: "Проверка статуса пользователя" })
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @Get("/check_status")
+  async checkActiveUser(@UserFromReq() userFromReq: User) {
+    return this.usersService.checkActiveUser(userFromReq);
   }
 
   @ApiOperation({ summary: "Получить пользователя по id" })

@@ -22,7 +22,6 @@ export class AuthService {
   constructor(
     @InjectRepository(User)
     private usersRepository: Repository<User>,
-
     private userService: UsersService,
     private jwtService: JwtService,
     private readonly mailerService: MailerService
@@ -61,7 +60,26 @@ export class AuthService {
 
     const token = await this.generateToken(user as User);
 
-    return { user, token };
+    const verifyEmailLink = `${process.env.CLIENT_APP_URL}/auth/verify_email?token=${token}`;
+
+    await this.mailerService
+      .sendMail({
+        to: user.email,
+        from: process.env.MAILDEV_INCOMING_USER,
+        subject: "Потдверждение регистрации",
+        html: `
+          <h3>Приветствуем!</h3>
+          <p>Пожалуйста, используйте данную <a href="${verifyEmailLink}" target='_blank'>cсылку</a> для потдверждения регистрации!</p>
+          <p>Если вы не регистрировались на нашем сайте <a href="${process.env.CLIENT_APP_URL}" target='_blank'>Bank-Zemel</a>, то проигнорируйте это письмо!</p>
+        `,
+      })
+      .catch(() => {
+        throw new InternalServerErrorException(
+          "Возникла ошибка! Пожалуйста повторите попытку или попробуйте позже"
+        );
+      });
+
+    // return { user, token };
   }
 
   async check(data: User) {
@@ -89,6 +107,13 @@ export class AuthService {
 
     if (!passwordEqauls) {
       throw new UnauthorizedException({ message: "Неверно указан пароль" });
+    }
+
+    if (!user.isActive) {
+      throw new UnauthorizedException({
+        message:
+          "Необходимо завершить регистрацию! Перейдите по ссылке из письма, отправленного на E-mail, указанный при регистрации!",
+      });
     }
 
     return user;
@@ -132,18 +157,17 @@ export class AuthService {
 
     const user = await this.userService.findById(id);
 
-    // неправильно отрабатывает
-    // const passwordEqauls = await bcrypt.compare(user.password, password);
-
-    // if (passwordEqauls) {
-    //   throw new UnauthorizedException({
-    //     message: "Пароль уже использовался! Введите другой пароль.",
-    //   });
-    // }
-
     const hashPass = await bcrypt.hash(password, 5);
 
     await this.usersRepository.save({ ...user, password: hashPass });
+
+    return true;
+  }
+
+  async verifyEmail(userFromReq: User) {
+    const { id } = userFromReq;
+
+    await this.userService.setStatusUser({ id, isActive: true });
 
     return true;
   }

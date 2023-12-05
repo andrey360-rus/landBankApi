@@ -50,6 +50,8 @@ import { SetStatusAnnouncementDto } from "./dto/set-status-announcement.dto";
 export class AnnouncementController {
   constructor(private readonly announcementService: AnnouncementService) {}
 
+  @Roles("ADMIN")
+  @UseGuards(RolesGuard)
   @Post("set_region_id")
   setRegionKladrIdAndDate(
     @Body() dadataApiKeys: string[],
@@ -59,6 +61,13 @@ export class AnnouncementController {
       dadataApiKeys,
       queryParams
     );
+  }
+
+  @Roles("ADMIN")
+  @UseGuards(RolesGuard)
+  @Post("set_unit_price")
+  setUnitPrice() {
+    return this.announcementService.setUnitPrice();
   }
 
   // @ApiOperation({ summary: "Создать объявления из парсера" })

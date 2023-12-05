@@ -3,11 +3,20 @@ import {
   HttpException,
   HttpStatus,
   Injectable,
+  InternalServerErrorException,
 } from "@nestjs/common";
 import { CreateAnnouncementDto } from "./dto/create-announcement.dto";
 import { UpdateAnnouncementDto } from "./dto/update-announcement.dto";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Between, ILike, In, MoreThanOrEqual, Not, Repository } from "typeorm";
+import {
+  Between,
+  ILike,
+  In,
+  IsNull,
+  MoreThanOrEqual,
+  Not,
+  Repository,
+} from "typeorm";
 import { Announcement } from "./entities/announcement.entity";
 import { GetAnnouncementsDto } from "./dto/get-announcements.dto";
 import { ToggleCheckedAnnouncementDto } from "./dto/toggle-checked-announcement.dto";
@@ -825,6 +834,19 @@ export class AnnouncementService {
     }
 
     return "Регионы успешно присвоены";
+  }
+
+  async setUnitPrice() {
+    try {
+      await this.announcementsRepository.update(
+        { unit_price: IsNull() },
+        { unit_price: () => "price / area" }
+      );
+
+      return "Цены успешно присвоены";
+    } catch (error) {
+      throw new InternalServerErrorException("Ошибка!");
+    }
   }
 
   // private async checkUnique(announcements: CreateAnnouncementDto[]) {

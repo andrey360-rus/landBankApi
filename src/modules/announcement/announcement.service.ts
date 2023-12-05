@@ -26,6 +26,7 @@ import {
   AreaUnitEnum,
 } from "./announcement.enum";
 import { SetStatusAnnouncementDto } from "./dto/set-status-announcement.dto";
+import { IObjectManagerFeature } from "./announcement.interface";
 
 @Injectable()
 export class AnnouncementService {
@@ -290,7 +291,6 @@ export class AnnouncementService {
             id: true,
             lat: true,
             lon: true,
-            area: true,
           },
         }),
         order: {
@@ -315,10 +315,11 @@ export class AnnouncementService {
           ...(date_range && {
             date_published: MoreThanOrEqual(dayAgo),
           }),
-          ...(isMapMethod && {
-            lat: Between(geoBoundsArr[0], geoBoundsArr[2]),
-            lon: Between(geoBoundsArr[1], geoBoundsArr[3]),
-          }),
+          ...(isMapMethod &&
+            !address && {
+              lat: Between(geoBoundsArr[0], geoBoundsArr[2]),
+              lon: Between(geoBoundsArr[1], geoBoundsArr[3]),
+            }),
           ...(userId && { user: { id: userId } }),
         },
         ...(limit && {
@@ -349,6 +350,23 @@ export class AnnouncementService {
           });
           break;
       }
+    }
+
+    if (isMapMethod) {
+      const objectManagerFeatures: IObjectManagerFeature[] = [];
+
+      listAnnouncement.forEach((announcement) =>
+        objectManagerFeatures.push({
+          type: "Feature",
+          id: announcement.id,
+          geometry: {
+            type: "Point",
+            coordinates: [announcement.lat, announcement.lon],
+          },
+        } as IObjectManagerFeature)
+      );
+
+      return { listAnnouncement: objectManagerFeatures, totalCount };
     }
 
     return { listAnnouncement, totalCount };

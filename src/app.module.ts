@@ -13,6 +13,7 @@ import { MailerModule } from "@nestjs-modules/mailer";
 import { ConfigModule } from "@nestjs/config";
 
 import { ScheduleModule } from "@nestjs/schedule";
+import { RequestAnnouncementsModule } from "./modules/request-announcements/request-announcements.module";
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { ScheduleModule } from "@nestjs/schedule";
     NotesModule,
     NewsModule,
     TasksModule,
+    RequestAnnouncementsModule,
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, "..", "src", "static", "uploads"),
       serveRoot: "/images",
@@ -45,7 +47,9 @@ import { ScheduleModule } from "@nestjs/schedule";
       },
     }),
     ScheduleModule.forRoot(),
-    ConfigModule.forRoot(),
+    ConfigModule.forRoot({
+      envFilePath: [`env.${process.env.NODE_ENV}`, "env"],
+    }),
   ],
 })
 export class AppModule {}

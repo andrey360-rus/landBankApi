@@ -10,6 +10,7 @@ import {
   UseGuards,
   UseInterceptors,
   UploadedFiles,
+  ClassSerializerInterceptor,
 } from "@nestjs/common";
 import { AnnouncementService } from "./announcement.service";
 // import { CreateAnnouncementDto } from "./dto/create-announcement.dto";
@@ -45,6 +46,7 @@ import { storage } from "./announcement.consts";
 import { CreateOneAnnouncementDto } from "./dto/create-one-announcement.dto";
 import { SetStatusAnnouncementDto } from "./dto/set-status-announcement.dto";
 
+@UseInterceptors(ClassSerializerInterceptor)
 @Controller("announcements")
 @ApiTags("Объявления")
 export class AnnouncementController {

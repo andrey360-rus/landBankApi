@@ -1,5 +1,5 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsEmail, IsString, MinLength } from "class-validator";
+import { IsBoolean, IsEmail, IsString, MinLength } from "class-validator";
 
 export class CreateUserDto {
   @ApiProperty({ example: "user@mail.ru", description: "Почтовый адрес" })
@@ -13,4 +13,11 @@ export class CreateUserDto {
     message: "Не меньше 8 символов",
   })
   readonly password: string;
+
+  @ApiProperty({
+    example: false,
+    description: "Статус на получение роли крупного землепользователя",
+  })
+  @IsBoolean()
+  readonly landUserStatus?: boolean;
 }

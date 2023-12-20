@@ -4,6 +4,7 @@ import {
   Get,
   Param,
   Post,
+  Query,
   UseGuards,
   UsePipes,
 } from "@nestjs/common";
@@ -26,6 +27,7 @@ import { FindAllOkResponse } from "./swagger/api-response/find-all-response.type
 import { AddRoleErrorResponse } from "./swagger/api-response/add-role-response.type";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { UserFromReq } from "../auth/decorators/user.decorator";
+import { FindAllUsersDto } from "./dto/find-all-users.dto";
 
 @ApiTags("Пользователи")
 @ApiBearerAuth()
@@ -51,8 +53,8 @@ export class UsersController {
   @Roles("ADMIN")
   @UseGuards(RolesGuard)
   @Get()
-  findAll() {
-    return this.usersService.findAll();
+  findAll(@Query() queryParams: FindAllUsersDto) {
+    return this.usersService.findAll(queryParams);
   }
 
   @ApiOperation({ summary: "Проверка статуса пользователя" })
@@ -89,5 +91,21 @@ export class UsersController {
   @Post("/add_role")
   addRole(@Body() roleDto: AddRoleDto) {
     return this.usersService.addRole(roleDto);
+  }
+
+  @ApiOperation({ summary: "Добавить роль пользователю" })
+  @ApiCreatedResponse({
+    description: "Роль успешно добавлена пользователю",
+    type: AddRoleDto,
+  })
+  @ApiBadRequestResponse({
+    description: "Пользователь или роль не найдены",
+    type: AddRoleErrorResponse,
+  })
+  @Roles("ADMIN")
+  @UseGuards(RolesGuard)
+  @Post("/add_land_user_role")
+  setLandUserRole(@Body() { userId }: { userId: number }) {
+    return this.usersService.setLandUserRole(userId);
   }
 }

@@ -10,6 +10,8 @@ import { ApiProperty } from "@nestjs/swagger";
 import { Role } from "src/modules/roles/entities/roles.entity";
 import { Announcement } from "src/modules/announcement/entities/announcement.entity";
 import { Note } from "src/modules/notes/entities/notes.entity";
+import { RequestAnnouncement } from "src/modules/request-announcements/entities/request-announcement.entity";
+import { Exclude } from "class-transformer";
 
 @Entity("users")
 export class User {
@@ -22,6 +24,7 @@ export class User {
   email: string;
 
   @ApiProperty({ example: "12345678", description: "Пароль" })
+  @Exclude()
   @Column("text")
   password: string;
 
@@ -29,18 +32,23 @@ export class User {
     example: false,
     description: "Статус регистрации пользователя",
   })
-  @Column("boolean", { default: false, nullable: false })
+  @Column("boolean", { default: false, nullable: false, name: "is_active" })
   isActive: boolean;
 
   @ApiProperty({
-    type: "array",
-    items: {
-      example: {
-        id: 1,
-        value: "ADMIN",
-        description: "Администратор",
-      },
-    },
+    example: false,
+    description: "Статус на получение роли крупного землепользователя",
+  })
+  @Column("boolean", {
+    default: false,
+    nullable: false,
+    name: "is_land_user_obtain_status",
+  })
+  isLandUserObtainStatus: boolean;
+
+  @ApiProperty({
+    isArray: true,
+    type: Role,
   })
   @ManyToMany(() => Role, (role) => role.users)
   @JoinTable({
@@ -57,23 +65,9 @@ export class User {
   roles: Role[];
 
   @ApiProperty({
-    type: "array",
-    items: {
-      example: {
-        Announcement,
-      },
-    },
+    isArray: true,
+    type: Announcement,
   })
-  // @ApiProperty({
-  //   type: "array",
-  //   items: {
-  //     example: {
-  //       id: 1,
-  //       value: "ADMIN",
-  //       description: "Администратор",
-  //     },
-  //   },
-  // })
   @ManyToMany(() => Announcement, (announcement) => announcement.users)
   @JoinTable({
     name: "favorite_announcements",
@@ -93,4 +87,10 @@ export class User {
 
   @OneToMany(() => Note, (note) => note.user)
   notes: Note[];
+
+  @OneToMany(
+    () => RequestAnnouncement,
+    (requestAnnouncement) => requestAnnouncement.user
+  )
+  requestAnnouncements: RequestAnnouncement[];
 }

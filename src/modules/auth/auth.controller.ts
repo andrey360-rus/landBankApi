@@ -1,10 +1,12 @@
 import {
   Body,
+  ClassSerializerInterceptor,
   Controller,
   Get,
   Patch,
   Post,
   UseGuards,
+  UseInterceptors,
   UsePipes,
 } from "@nestjs/common";
 import {
@@ -34,6 +36,7 @@ import { ForgotPasswordDto } from "./dto/forgot-password.dto";
 import { ValidationPipe } from "src/pipes/validation.pipe";
 import { ChangePasswordDto } from "./dto/change-password.dto";
 
+@UseInterceptors(ClassSerializerInterceptor)
 @ApiTags("Авторизация")
 @Controller("auth")
 export class AuthController {

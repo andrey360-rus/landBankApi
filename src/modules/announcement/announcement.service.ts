@@ -181,8 +181,8 @@ export class AnnouncementService {
       is_checked: false,
       type_of_use,
       cultivated_crop,
-      irrigation: irrigation === "false" ? false : true,
-      survey: survey === "false" ? false : true,
+      irrigation: irrigation === "true",
+      survey: survey === "true",
       rent_period: rentPeriod ? dateRentPeriod : null,
       status: AnnouncementStatusesEnum.AWAIT,
       user: {
@@ -382,7 +382,7 @@ export class AnnouncementService {
   }
 
   async findOne(id: number) {
-    const announcement = await this.announcementsRepository.findOneOrFail({
+    const announcement = await this.announcementsRepository.findOne({
       where: { id },
       relations: ["user"],
     });
@@ -479,8 +479,8 @@ export class AnnouncementService {
       date_updated,
       photos: newAnnouncementPhotos,
       ...(coords && { lat: coords.lat, lon: coords.lon }),
-      irrigation: irrigation === "false" ? false : true,
-      survey: survey === "false" ? false : true,
+      irrigation: irrigation === "true",
+      survey: survey === "true",
       rent_period: rentPeriod ? dateRentPeriod : null,
       cultivated_crop: type_of_use === "arable" ? cultivated_crop : null,
       unit_price: price / newArea,
@@ -628,35 +628,6 @@ export class AnnouncementService {
     );
   }
 
-  // private dateGeneration(
-  //   announcements: CreateAnnouncementDto[] | Announcement[]
-  // ) {
-  //   announcements.forEach(
-  //     (announcement: {
-  //       date_published: string | Date;
-  //       date_updated: string | Date;
-  //     }) => {
-  //       const { date_published, date_updated } = announcement;
-  //       if (date_published && date_updated && date_published !== "NULL") {
-  //         const dateArr = [date_published, date_updated];
-
-  //         const newDateArr = dateArr.map((date) => {
-  //           const parseDate = this.datesService.parseDate(date as string);
-
-  //           const generatedDate = this.datesService.formateDate(parseDate);
-
-  //           return generatedDate;
-  //         });
-
-  //         announcement.date_published = newDateArr[0];
-  //         announcement.date_updated = newDateArr[1];
-  //       }
-  //     }
-  //   );
-
-  //   return announcements;
-  // }
-
   private async regionKladrIdGeneration(
     announcements: CreateAnnouncementDto[] | Announcement[],
     token: string
@@ -773,14 +744,6 @@ export class AnnouncementService {
     }
   }
 
-  // private setUnitPrice(announcements: CreateAnnouncementDto[]) {
-  //   for (const announcement of announcements) {
-  //     announcement.unit_price = announcement.price / announcement.area;
-  //   }
-
-  //   return announcements;
-  // }
-
   async setStatusAnnouncement(data: SetStatusAnnouncementDto) {
     const { id, status } = data;
     await this.announcementsRepository.update({ id }, { status });
@@ -848,25 +811,4 @@ export class AnnouncementService {
       throw new InternalServerErrorException("Ошибка!");
     }
   }
-
-  // private async checkUnique(announcements: CreateAnnouncementDto[]) {
-  //   const filteredAnnouncements: CreateAnnouncementDto[] = [];
-
-  //   for (let i = 0; i < announcements.length; i++) {
-  //     const candidateAnnouncement = await this.announcementsRepository.findOne({
-  //       where: {
-  //         title: announcements[i].title,
-  //         price: announcements[i].price,
-  //         area: announcements[i].area,
-  //         address: announcements[i].address,
-  //       },
-  //     });
-
-  //     if (!candidateAnnouncement) {
-  //       filteredAnnouncements.push(announcements[i]);
-  //     }
-  //   }
-
-  //   return filteredAnnouncements;
-  // }
 }

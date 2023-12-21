@@ -78,8 +78,6 @@ export class AuthService {
           "Возникла ошибка! Пожалуйста повторите попытку или попробуйте позже"
         );
       });
-
-    // return { user, token };
   }
 
   async check(data: User) {

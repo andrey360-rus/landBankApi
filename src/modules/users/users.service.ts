@@ -7,6 +7,7 @@ import { RolesService } from "../roles/roles.service";
 import { AddRoleDto } from "./dto/add-role.dto";
 import { RolesEnum } from "../roles/roles.enum";
 import { SetStatusUserDto } from "./dto/set-status-user.dto";
+import { FindAllUsersDto } from "./dto/find-all-users.dto";
 
 @Injectable()
 export class UsersService {
@@ -17,7 +18,11 @@ export class UsersService {
   ) {}
 
   async create(data: CreateUserDto) {
-    const user = this.usersRepository.create(data);
+    const { landUserStatus } = data;
+    const user = this.usersRepository.create({
+      ...data,
+      isLandUserObtainStatus: landUserStatus,
+    });
 
     const role = await this.roleService.findRoleByValue(RolesEnum.USER);
 
@@ -28,9 +33,22 @@ export class UsersService {
     return userWithRoles;
   }
 
-  async findAll() {
+  async findAll(queryParams: FindAllUsersDto) {
+    const { isLandUserObtainStatus } = queryParams;
+
     const [listUsers, totalCount] = await this.usersRepository.findAndCount({
+      select: {
+        id: true,
+        email: true,
+        isActive: true,
+        isLandUserObtainStatus: true,
+      },
       relations: ["roles"],
+      where: {
+        ...(isLandUserObtainStatus && {
+          isLandUserObtainStatus,
+        }),
+      },
     });
 
     return { listUsers, totalCount };
@@ -38,6 +56,12 @@ export class UsersService {
 
   async findById(id: number) {
     const user = await this.usersRepository.findOne({
+      select: {
+        id: true,
+        email: true,
+        isActive: true,
+        isLandUserObtainStatus: true,
+      },
       where: { id },
       relations: ["favoritiesAnnouncements"],
     });
@@ -63,7 +87,7 @@ export class UsersService {
     const role = await this.roleService.findRoleByValue(value);
 
     if (role && user) {
-      const newUserRoles = user.roles.concat(role); // spread не работает как на 22 строке, будет перезаписывать текущий массив ролей
+      const newUserRoles = user.roles.concat(role);
 
       const userWithNewRoles = { ...user, roles: newUserRoles };
 
@@ -92,5 +116,16 @@ export class UsersService {
     const user = await this.findById(id);
 
     return { isActiveStatus: user.isActive };
+  }
+
+  async setLandUserRole(userId: number) {
+    await this.usersRepository.update(
+      { id: userId },
+      {
+        isLandUserObtainStatus: false,
+      }
+    );
+
+    await this.addRole({ userId, value: RolesEnum.LAND_USER });
   }
 }

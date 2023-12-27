@@ -9,10 +9,18 @@ import { User } from "../users/entities/users.entity";
 import { UsersModule } from "../users/users.module";
 import { Note } from "../notes/entities/notes.entity";
 import { NotesModule } from "../notes/notes.module";
+import { Region } from "./entities/region.entity";
+import { RegionIntervalPriceCategory } from "./entities/region-interval-price-category.entity";
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Announcement, User, Note]),
+    TypeOrmModule.forFeature([
+      Announcement,
+      Region,
+      RegionIntervalPriceCategory,
+      User,
+      Note,
+    ]),
     JwtModule.register({
       secret: process.env.PRIVATE_KEY || "SECRET",
       signOptions: {

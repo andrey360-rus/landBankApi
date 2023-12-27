@@ -54,7 +54,7 @@ export class AnnouncementController {
 
   @Roles("ADMIN")
   @UseGuards(RolesGuard)
-  @Post("set_is_include")
+  @Post("unit_price_check_in_interval")
   unitPriceCheckInInterval() {
     return this.announcementService.unitPriceCheckInInterval();
   }

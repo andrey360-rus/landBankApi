@@ -36,6 +36,8 @@ import {
 } from "./announcement.enum";
 import { SetStatusAnnouncementDto } from "./dto/set-status-announcement.dto";
 import { IObjectManagerFeature } from "./announcement.interface";
+import { Region } from "./entities/region.entity";
+import { RegionIntervalPriceCategory } from "./entities/region-interval-price-category.entity";
 
 @Injectable()
 export class AnnouncementService {
@@ -45,7 +47,12 @@ export class AnnouncementService {
     @InjectRepository(User)
     private usersRepository: Repository<User>,
     private readonly datesService: DatesService,
-    private readonly userService: UsersService
+    private readonly userService: UsersService,
+
+    @InjectRepository(Region)
+    private regionRepository: Repository<Region>,
+    @InjectRepository(RegionIntervalPriceCategory)
+    private regionsIntervalRepository: Repository<RegionIntervalPriceCategory>
   ) {}
 
   // async create_v2(data: Array<CreateAnnouncementDto>) {
@@ -808,7 +815,19 @@ export class AnnouncementService {
 
       return "Цены успешно присвоены";
     } catch (error) {
-      throw new InternalServerErrorException("Ошибка!");
+      throw new InternalServerErrorException("Ошибка!", error);
+    }
+  }
+
+  async unitPriceCheckInInterval() {
+    try {
+      await this.announcementsRepository.query(
+        "update announcement set is_include = (case when announcement.unit_price between region_interval_price_category.min_price and region_interval_price_category.max_price then true else false end) from region inner join region_interval_price_category on region_interval_price_category.id = region.region_interval_price_category_id where region.region_id = announcement.region_kladr_id"
+      );
+
+      return "Статусы успешно присвоены";
+    } catch (error) {
+      throw new InternalServerErrorException("Ошибка!", error);
     }
   }
 }

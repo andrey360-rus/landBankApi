@@ -54,6 +54,13 @@ export class AnnouncementController {
 
   @Roles("ADMIN")
   @UseGuards(RolesGuard)
+  @Post("unit_price_check_in_interval")
+  unitPriceCheckInInterval() {
+    return this.announcementService.unitPriceCheckInInterval();
+  }
+
+  @Roles("ADMIN")
+  @UseGuards(RolesGuard)
   @Post("set_region_id")
   setRegionKladrIdAndDate(
     @Body() dadataApiKeys: string[],

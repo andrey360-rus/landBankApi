@@ -276,6 +276,9 @@ export class Announcement {
   })
   status: string;
 
+  @Column("boolean", { nullable: true, name: "is_include" })
+  isInclude: boolean;
+
   @ManyToMany(() => User, (user) => user.favoritiesAnnouncements, {
     onDelete: "CASCADE",
     onUpdate: "CASCADE",
